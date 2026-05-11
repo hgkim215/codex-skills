@@ -18,7 +18,7 @@
   ],
   "skills": "./cross-verify",
   "interface": {
-    "displayName": "HG Codex Skills",
+    "displayName": "Codex Skills by Hyeongi Kim",
     "shortDescription": "Public Codex skills by Hyeongi Kim",
     "longDescription": "A public collection of Codex skills. The first skill, cross-verify, launches Codex, Gemini, and Copilot reviewers in tmux and summarizes their results.",
     "developerName": "Hyeongi Kim",

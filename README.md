@@ -1,58 +1,76 @@
-# HG Codex Skills
+# Codex Skills by Hyeongi Kim
 
-Public Codex skill collection by Hyeongi Kim.
+Hyeongi Kim이 직접 사용하는 Codex 스킬 모음입니다.
 
-The first released skill is `cross-verify`, a tmux-based multi-reviewer workflow that asks Codex, Gemini, and Copilot to inspect the same prompt in parallel, then produces run metadata for final synthesis.
+첫 번째 공개 스킬은 `cross-verify`입니다. 하나의 검증 프롬프트를 Codex, Gemini, Copilot reviewer에게 병렬로 보내고, 각 reviewer의 결과와 실행 상태를 요약해 최종 판단을 돕습니다.
 
-## Skills
+## 포함된 스킬
 
 ### cross-verify
 
-Use `cross-verify` when you want an independent review of an answer, code change, design choice, bug analysis, or release decision.
+답변, 코드 리뷰, 설계 선택, 버그 분석, 릴리즈 판단처럼 한 번 더 독립 검증이 필요한 상황에서 사용합니다.
 
-The skill launches reviewer agents in tmux, opens the tmux session in Ghostty by default when available, and writes:
+`cross-verify`는 tmux 세션에서 reviewer들을 병렬 실행하고, 기본적으로 Ghostty 창을 열어 진행 상황을 볼 수 있게 합니다. 실행 후에는 아래 파일을 생성합니다.
 
 - `run_summary.md`
 - `results/codex.out`
 - `results/gemini.out`
 - `results/copilot.out`
 
-The summary records reviewer status, timeout state, payload quality, retry count, Copilot model attempts, fallback state, and result sizes.
+`run_summary.md`에는 reviewer별 status, timeout 여부, payload 품질, retry 횟수, Copilot 모델 시도 이력, fallback 여부, 결과 파일 크기가 기록됩니다.
 
-## Requirements
+## 사전 준비
 
-`cross-verify` expects these CLIs to be installed and authenticated on the local machine:
+`cross-verify`를 제대로 사용하려면 로컬에 아래 CLI가 설치되고 인증되어 있어야 합니다.
 
 - `tmux`
 - `codex`
 - `gemini`
 - `copilot`
 
-Ghostty is optional but recommended. If Ghostty is unavailable, the helper falls back to Terminal. Automation can pass `--no-open-terminal`.
+Ghostty는 필수는 아니지만 권장합니다. Ghostty가 없으면 macOS Terminal로 fallback됩니다. 자동화나 테스트에서는 `--no-open-terminal` 옵션을 사용할 수 있습니다.
 
-## Install
+## 사용하는 방법
 
-List available skills:
+### 1. 레포에서 사용 가능한 스킬 확인
+
+먼저 이 레포에서 설치할 수 있는 스킬 목록을 확인합니다.
 
 ```bash
 npx skills@latest add hgkim215/codex-skills --list
 ```
 
-Install `cross-verify` for Codex:
+현재는 `cross-verify`가 표시됩니다.
+
+### 2. 원하는 스킬을 Codex에 설치
+
+`cross-verify`를 Codex 전역 스킬로 설치합니다.
 
 ```bash
 npx skills@latest add hgkim215/codex-skills --skill cross-verify --agent codex --global --yes
 ```
 
-Install this repo as a Codex plugin marketplace:
+설치 후 새 Codex 세션에서 `$cross-verify` 트리거로 사용할 수 있습니다.
+
+### 3. Codex plugin marketplace로 등록
+
+Codex plugin marketplace 방식으로도 이 레포를 등록할 수 있습니다.
 
 ```bash
 codex plugin marketplace add hgkim215/codex-skills
 ```
 
-## Usage
+이미 등록한 뒤 최신 버전으로 갱신하려면 아래 명령을 사용합니다.
 
-Ask Codex with the skill trigger:
+```bash
+codex plugin marketplace upgrade hgkim-codex-skills
+```
+
+이 방식은 Codex가 이 레포를 plugin marketplace source로 인식하게 하는 경로입니다. 현재 Codex CLI에는 별도의 `codex plugin install` 또는 `codex plugin list` 명령은 없고, marketplace `add`, `upgrade`, `remove` 흐름을 사용합니다.
+
+## 사용 예시
+
+Codex에게 아래처럼 요청합니다.
 
 ```text
 $cross-verify 이 변경을 릴리즈해도 되는지 교차검증해줘.
@@ -69,9 +87,9 @@ $cross-verify 이 변경을 릴리즈해도 되는지 교차검증해줘.
 각 reviewer는 P0/P1/P2로 심각도를 나누고, 근거가 있는 항목만 제시해줘.
 ```
 
-The main Codex should read `run_summary.md` first, then inspect `results/*.out` before giving the final synthesis.
+실행이 끝나면 main Codex는 먼저 `run_summary.md`를 확인하고, 그 다음 `results/*.out`을 읽어 reviewer들의 공통 의견, 고유 지적, 충돌 지점, 최종 판단을 종합합니다.
 
-## Repository Layout
+## 레포 구조
 
 ```text
 .
@@ -84,6 +102,6 @@ The main Codex should read `run_summary.md` first, then inspect `results/*.out` 
 └── README.md
 ```
 
-## License
+## 라이선스
 
 MIT

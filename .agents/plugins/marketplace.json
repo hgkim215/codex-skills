@@ -1,7 +1,7 @@
 {
   "name": "hgkim-codex-skills",
   "interface": {
-    "displayName": "HG Codex Skills"
+    "displayName": "Codex Skills by Hyeongi Kim"
   },
   "plugins": [
     {
