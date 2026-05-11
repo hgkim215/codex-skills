@@ -1,0 +1,38 @@
+{
+  "name": "hgkim-codex-skills",
+  "version": "0.1.0",
+  "description": "A public collection of Codex skills by Hyeongi Kim, starting with cross-verify.",
+  "author": {
+    "name": "Hyeongi Kim",
+    "url": "https://github.com/hgkim215"
+  },
+  "homepage": "https://github.com/hgkim215/codex-skills",
+  "repository": "https://github.com/hgkim215/codex-skills",
+  "license": "MIT",
+  "keywords": [
+    "codex",
+    "skills",
+    "cross-verify",
+    "tmux",
+    "review"
+  ],
+  "skills": "./cross-verify",
+  "interface": {
+    "displayName": "HG Codex Skills",
+    "shortDescription": "Public Codex skills by Hyeongi Kim",
+    "longDescription": "A public collection of Codex skills. The first skill, cross-verify, launches Codex, Gemini, and Copilot reviewers in tmux and summarizes their results.",
+    "developerName": "Hyeongi Kim",
+    "category": "Productivity",
+    "capabilities": [
+      "Interactive",
+      "Write"
+    ],
+    "websiteURL": "https://github.com/hgkim215/codex-skills",
+    "defaultPrompt": [
+      "Use $cross-verify to review this decision with Codex, Gemini, and Copilot.",
+      "Cross-check this implementation for release-blocking risks.",
+      "Ask reviewer agents to compare risks before the final answer."
+    ],
+    "brandColor": "#2563EB"
+  }
+}

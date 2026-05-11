@@ -1,0 +1,7 @@
+interface:
+  display_name: "Cross Verify"
+  short_description: "Cross-check work with three AI reviewers"
+  default_prompt: "Use $cross-verify to cross-check this with Codex, Gemini, and Copilot before giving the final decision."
+
+policy:
+  allow_implicit_invocation: true
