@@ -76,7 +76,6 @@ The main Codex should read `run_summary.md` first, then inspect `results/*.out` 
 ```text
 .
 ├── .agents/plugins/marketplace.json
-├── .claude-plugin/plugin.json
 ├── .codex-plugin/plugin.json
 ├── cross-verify/
 │   ├── SKILL.md
