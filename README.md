@@ -44,7 +44,7 @@ Install `cross-verify` for Codex:
 npx skills@latest add hgkim215/codex-skills --skill cross-verify --agent codex --global --yes
 ```
 
-When Codex plugin marketplace installation is available in your environment, add this repo as a marketplace:
+Install this repo as a Codex plugin marketplace:
 
 ```bash
 codex plugin marketplace add hgkim215/codex-skills
