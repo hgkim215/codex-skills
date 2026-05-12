@@ -20,7 +20,13 @@ This manifest defines the public release surface for the Ralph Codex skill suite
 - `references/harness-engineering-guide.md`
 - `references/goal-lifecycle-contract.md`
 
-The suite is designed to be installed as a group under:
+The suite can be installed skill-by-skill with `npx skills@latest`, which copies Codex skills to:
+
+```text
+~/.agents/skills/<skill-name>
+```
+
+When installed or copied into Codex's native skills directory, the expected layout is:
 
 ```text
 ${CODEX_HOME:-$HOME/.codex}/skills/

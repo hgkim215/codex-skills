@@ -30,6 +30,7 @@ npx skills@latest add hgkim215/codex-skills --skill ralph-execute --agent codex 
 ```
 
 다른 스킬을 설치하려면 `ralph-execute` 자리에 원하는 폴더명을 넣습니다.
+이 명령은 Codex용 skill을 기본적으로 `~/.agents/skills/<skill-name>`에 복사합니다.
 
 ### List installable skills
 
