@@ -1,0 +1,4 @@
+interface:
+  display_name: "Code Review"
+  short_description: "Review diffs and goal completion"
+  default_prompt: "Use $code-review to review a completed diff, prioritize findings, identify test gaps, suggest harness rule candidates, and decide goal completion."

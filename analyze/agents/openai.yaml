@@ -1,0 +1,4 @@
+interface:
+  display_name: "Analyze"
+  short_description: "Read-only analysis with goal alignment"
+  default_prompt: "Use $analyze to inspect this codebase or project context, separate findings from inference, and report goal alignment when available."

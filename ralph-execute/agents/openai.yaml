@@ -1,0 +1,4 @@
+interface:
+  display_name: "Ralph Execute"
+  short_description: "Implement plans with goal checkpoints"
+  default_prompt: "Use $ralph-execute to implement an approved plan, check existing goal alignment without creating phase goals, use tmux-visible workers when useful, and verify the result."

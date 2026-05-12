@@ -1,0 +1,4 @@
+interface:
+  display_name: "Ralph QA"
+  short_description: "Reproduce failures and goal impact"
+  default_prompt: "Use $ralph-qa to reproduce a failure, apply a scoped fix, rerun verification, check regressions, and report goal impact."

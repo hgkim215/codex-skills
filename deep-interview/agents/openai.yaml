@@ -1,0 +1,4 @@
+interface:
+  display_name: "Deep Interview"
+  short_description: "Clarify requests and initialize goals"
+  default_prompt: "Use $deep-interview to clarify this vague request into scope, constraints, done criteria, and create or propose one macro goal only when goal tracking was explicitly requested."

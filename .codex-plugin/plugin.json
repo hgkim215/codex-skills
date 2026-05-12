@@ -1,7 +1,7 @@
 {
   "name": "hgkim-codex-skills",
   "version": "0.1.0",
-  "description": "A public collection of Codex skills by Hyeongi Kim, starting with cross-verify.",
+  "description": "A public collection of Codex workflow skills by Hyeongi Kim, including cross-verify and the Ralph suite.",
   "author": {
     "name": "Hyeongi Kim",
     "url": "https://github.com/hgkim215"
@@ -13,14 +13,17 @@
     "codex",
     "skills",
     "cross-verify",
+    "ralph",
+    "workflow",
+    "qa",
     "tmux",
     "review"
   ],
-  "skills": "./cross-verify",
+  "skills": "./",
   "interface": {
     "displayName": "Codex Skills by Hyeongi Kim",
     "shortDescription": "Public Codex skills by Hyeongi Kim",
-    "longDescription": "A public collection of Codex skills. The first skill, cross-verify, launches Codex, Gemini, and Copilot reviewers in tmux and summarizes their results.",
+    "longDescription": "A public collection of Codex workflow skills. cross-verify launches Codex, Gemini, and Copilot reviewers in tmux. The Ralph suite structures requirements, analysis, planning, execution, QA, visual QA, code review, and tmux worker watching.",
     "developerName": "Hyeongi Kim",
     "category": "Productivity",
     "capabilities": [
@@ -30,8 +33,8 @@
     "websiteURL": "https://github.com/hgkim215/codex-skills",
     "defaultPrompt": [
       "Use $cross-verify to review this decision with Codex, Gemini, and Copilot.",
-      "Cross-check this implementation for release-blocking risks.",
-      "Ask reviewer agents to compare risks before the final answer."
+      "Use $ralplan to turn this request into an execution-ready plan.",
+      "Use $ralph-execute to implement this approved plan and verify it."
     ],
     "brandColor": "#2563EB"
   }

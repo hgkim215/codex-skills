@@ -1,107 +1,130 @@
 # Codex Skills by Hyeongi Kim
 
-Hyeongi Kim이 직접 사용하는 Codex 스킬 모음입니다.
+Codex에서 반복적으로 쓰는 작업 흐름을 스킬로 묶은 공개 저장소입니다.
 
-첫 번째 공개 스킬은 `cross-verify`입니다. 하나의 검증 프롬프트를 Codex, Gemini, Copilot reviewer에게 병렬로 보내고, 각 reviewer의 결과와 실행 상태를 요약해 최종 판단을 돕습니다.
+현재 포함된 축은 두 가지입니다.
 
-## 포함된 스킬
+- `cross-verify`: Codex, Gemini, Copilot reviewer를 tmux에서 병렬 실행해 결론을 교차검증
+- Ralph suite: 요구사항 정리, 분석, 계획, 실행, QA, 시각 검증, 코드 리뷰, worker 진행상황 관찰을 나눈 Codex-native workflow
 
-### cross-verify
+## Skills
 
-답변, 코드 리뷰, 설계 선택, 버그 분석, 릴리즈 판단처럼 한 번 더 독립 검증이 필요한 상황에서 사용합니다.
+| Skill | When to use |
+| --- | --- |
+| [`cross-verify`](./cross-verify/) | 중요한 답변, 설계, 리뷰, 릴리스 판단을 여러 reviewer로 교차검증할 때 |
+| [`deep-interview`](./deep-interview/) | 요구사항, 범위, 완료 기준이 불명확한 작업을 시작할 때 |
+| [`analyze`](./analyze/) | 수정 전에 코드베이스, 문서, 장애 원인, 하네스를 읽기 전용으로 분석할 때 |
+| [`ralplan`](./ralplan/) | 구현 전에 실행 가능한 계획과 worker 분할 여부를 정할 때 |
+| [`ralph-execute`](./ralph-execute/) | 승인된 계획이나 구체적 변경 요청을 실제로 구현할 때 |
+| [`ralph-qa`](./ralph-qa/) | 실패한 테스트, 빌드, 런타임 오류를 재현-수정-검증할 때 |
+| [`visual-ralph-qa`](./visual-ralph-qa/) | UI, 화면, 레이아웃, 반응형, 스크린샷 기반 검증이 필요할 때 |
+| [`code-review`](./code-review/) | 완료된 diff나 QA 결과를 릴리스 전 리뷰할 때 |
+| [`tmux-worker-watch`](./tmux-worker-watch/) | tmux/Ghostty에서 도는 worker 진행 상황을 읽고 요약할 때 |
 
-`cross-verify`는 tmux 세션에서 reviewer들을 병렬 실행하고, 기본적으로 Ghostty 창을 열어 진행 상황을 볼 수 있게 합니다. 실행 후에는 아래 파일을 생성합니다.
+## Quick Install
 
-- `run_summary.md`
-- `results/codex.out`
-- `results/gemini.out`
-- `results/copilot.out`
+### Install one skill
 
-`run_summary.md`에는 reviewer별 status, timeout 여부, payload 품질, retry 횟수, Copilot 모델 시도 이력, fallback 여부, 결과 파일 크기가 기록됩니다.
+```bash
+npx skills@latest add hgkim215/codex-skills --skill ralph-execute --agent codex --global --yes
+```
 
-## 사전 준비
+다른 스킬을 설치하려면 `ralph-execute` 자리에 원하는 폴더명을 넣습니다.
 
-`cross-verify`를 제대로 사용하려면 로컬에 아래 CLI가 설치되고 인증되어 있어야 합니다.
+### List installable skills
+
+```bash
+npx skills@latest add hgkim215/codex-skills --list
+```
+
+### Register as a Codex plugin marketplace source
+
+```bash
+codex plugin marketplace add hgkim215/codex-skills
+```
+
+이미 등록한 뒤 최신 버전으로 갱신하려면:
+
+```bash
+codex plugin marketplace upgrade hgkim-codex-skills
+```
+
+설치 후에는 Codex를 재시작해야 새 스킬이 인식됩니다.
+
+## Ralph Workflow
+
+Ralph suite는 한 번에 모든 일을 시키기보다 작업 단계를 분리합니다.
+
+```text
+$deep-interview -> $analyze -> $ralplan -> $ralph-execute -> $ralph-qa / $visual-ralph-qa -> $code-review
+```
+
+큰 작업에서 worker를 나누는 경우 `ralph-execute`는 Codex CLI worker를 tmux 세션으로 띄울 수 있고, `tmux-worker-watch`는 그 진행 상황을 Codex App 대화로 요약합니다.
+
+Codex `goal` 기능은 선택 사항입니다. Ralph 스킬들은 goal을 per-skill checklist로 쓰지 않고 thread-level macro objective로만 다룹니다.
+
+## Requirements
+
+공통:
+
+- Codex with local skill support
+- `python3`
+- `bash`
+- `git`
+
+tmux worker 기능:
+
+- `tmux`
+- Codex CLI
+- Ghostty optional; 없으면 macOS Terminal 또는 수동 `tmux attach` 명령을 사용합니다.
+
+`cross-verify`:
 
 - `tmux`
 - `codex`
 - `gemini`
 - `copilot`
 
-Ghostty는 필수는 아니지만 권장합니다. Ghostty가 없으면 macOS Terminal로 fallback됩니다. 자동화나 테스트에서는 `--no-open-terminal` 옵션을 사용할 수 있습니다.
+`visual-ralph-qa`:
 
-## 사용하는 방법
+- Codex Browser, Playwright, 또는 사용 가능한 브라우저 자동화 표면
 
-### 1. 레포에서 사용 가능한 스킬 확인
+## Validation
 
-먼저 이 레포에서 설치할 수 있는 스킬 목록을 확인합니다.
-
-```bash
-npx skills@latest add hgkim215/codex-skills --list
-```
-
-현재는 `cross-verify`가 표시됩니다.
-
-### 2. 원하는 스킬을 Codex에 설치
-
-`cross-verify`를 Codex 전역 스킬로 설치합니다.
+Ralph suite 검증:
 
 ```bash
-npx skills@latest add hgkim215/codex-skills --skill cross-verify --agent codex --global --yes
+scripts/validate_release.sh
+scripts/validate_ralph_release.sh
+scripts/e2e_ralph_release.sh --deterministic --keep
+scripts/e2e_ralph_release.sh --codex --keep
 ```
 
-설치 후 새 Codex 세션에서 `$cross-verify` 트리거로 사용할 수 있습니다.
+`validate_release.sh`는 전체 repo plugin metadata, 모든 skill folder, README, YAML, shell script를 확인합니다.
 
-### 3. Codex plugin marketplace로 등록
+`--codex` E2E는 실제 Codex CLI worker를 tmux에서 실행해 임시 repo를 수정하고, run summary와 watcher 출력까지 검증합니다.
 
-Codex plugin marketplace 방식으로도 이 레포를 등록할 수 있습니다.
-
-```bash
-codex plugin marketplace add hgkim215/codex-skills
-```
-
-이미 등록한 뒤 최신 버전으로 갱신하려면 아래 명령을 사용합니다.
-
-```bash
-codex plugin marketplace upgrade hgkim-codex-skills
-```
-
-이 방식은 Codex가 이 레포를 plugin marketplace source로 인식하게 하는 경로입니다. 현재 Codex CLI에는 별도의 `codex plugin install` 또는 `codex plugin list` 명령은 없고, marketplace `add`, `upgrade`, `remove` 흐름을 사용합니다.
-
-## 사용 예시
-
-Codex에게 아래처럼 요청합니다.
-
-```text
-$cross-verify 이 변경을 릴리즈해도 되는지 교차검증해줘.
-
-상황:
-- 변경 요약을 여기에 적는다.
-- 검증해야 할 리스크를 적는다.
-
-검증할 것:
-1. 실패했는데 성공처럼 보일 가능성
-2. 운영 환경에서 깨질 가능성
-3. 문서와 실제 동작 불일치
-
-각 reviewer는 P0/P1/P2로 심각도를 나누고, 근거가 있는 항목만 제시해줘.
-```
-
-실행이 끝나면 main Codex는 먼저 `run_summary.md`를 확인하고, 그 다음 `results/*.out`을 읽어 reviewer들의 공통 의견, 고유 지적, 충돌 지점, 최종 판단을 종합합니다.
-
-## 레포 구조
+## Repository Structure
 
 ```text
 .
 ├── .agents/plugins/marketplace.json
 ├── .codex-plugin/plugin.json
 ├── cross-verify/
-│   ├── SKILL.md
-│   ├── agents/openai.yaml
-│   └── scripts/cross_verify_tmux.sh
+├── deep-interview/
+├── analyze/
+├── ralplan/
+├── ralph-execute/
+├── ralph-qa/
+├── visual-ralph-qa/
+├── code-review/
+├── tmux-worker-watch/
+├── references/
+├── scripts/
+├── RALPH_RELEASE_MANIFEST.md
 └── README.md
 ```
 
-## 라이선스
+## License
 
 MIT

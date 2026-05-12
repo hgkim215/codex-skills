@@ -1,0 +1,4 @@
+interface:
+  display_name: "Tmux Worker Watch"
+  short_description: "Summarize tmux progress with goal context"
+  default_prompt: "Use $tmux-worker-watch to inspect tmux worker panes or status files read-only and summarize goal context, progress, blockers, and next handoff."
