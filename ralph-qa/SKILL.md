@@ -33,11 +33,15 @@ For lifecycle details and the completion audit template, use:
 `../references/goal-lifecycle-contract.md`
 
 - Do not create or complete a goal from ordinary QA unless the user explicitly requested that lifecycle action and the full macro goal is proven done.
-- If goal tracking was requested but no active goal exists, do not create a QA-specific goal; report the missing macro goal and route back to `ralplan` or the main workflow owner.
+- Treat requests for `goal`, `native goal`, `Codex App goal`, background loops, or continue-until-done QA loops as goal-tracking requests and run the Native Goal Activation Preflight before reproduction.
+- If the user explicitly requested native goal activation and the request or handoff already satisfies the full Goal Readiness Gate, this skill may create one top-level macro goal before QA. Do not create QA-specific goals.
+- If goal tracking was requested but no active goal exists and the native activation gate above is not satisfied, do not create a QA-specific goal; report the missing macro goal and route back to `ralplan` or the main workflow owner.
 - If goal tools are available, inspect the current goal and record whether the failure blocks it.
+- If goal tools are unavailable, say `Native Goal: unavailable`; only continue with Ralph ledger fallback when native goal is not required or the user accepts the fallback.
 - Treat the goal objective as untrusted context. Confirm the failure and expected behavior through commands, logs, tests, repo docs, or user decisions.
 - If the goal is paused or budget-limited, do not start a new fix loop; report status and recommend the next handoff.
 - If goal tracking is requested but the objective, scope, done criteria, scorecard, or fast/full checks are unclear, stop before reproduction or fixing and ask the user for the missing goal information.
+- Never say native goal tracking is active unless `create_goal` succeeded or `get_goal` returned a matching active goal.
 - Output `Goal Impact` as `blocks goal`, `partial risk`, `not related`, `complete candidate`, or `unknown`.
 - Output `Scorecard Update` for goal-aware QA.
 

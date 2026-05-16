@@ -62,7 +62,7 @@ $deep-interview -> $analyze -> $ralplan -> $ralph-execute -> $ralph-qa / $visual
 
 큰 작업에서 worker를 나누는 경우 `ralph-execute`는 Codex CLI worker를 tmux 세션으로 띄울 수 있고, `tmux-worker-watch`는 그 진행 상황을 Codex App 대화로 요약합니다. 각 worker run은 즉시 확인용 `worker_handoff_summary.md`를 만들고, 기본적으로 `.ralph/worker-runs/` 아래에 누적 handoff bundle과 `INDEX.md`를 남깁니다.
 
-Codex `goal` 기능은 선택 사항입니다. Ralph 스킬들은 goal을 per-skill checklist로 쓰지 않고 thread-level macro objective로만 다룹니다.
+Codex `goal` 기능은 선택 사항입니다. Ralph 스킬들은 goal을 per-skill checklist로 쓰지 않고 thread-level macro objective로만 다룹니다. 사용자가 `goal`, `native goal`, `Codex App goal`, 백그라운드 루프, 또는 완료될 때까지 계속 진행을 요청하면 native goal tool preflight를 먼저 시도합니다. native tool이 없으면 goal이 활성화됐다고 주장하지 않고, 명시적으로 Ralph ledger fallback 여부를 나눠서 보고합니다.
 
 ## Requirements
 
@@ -95,6 +95,7 @@ tmux worker 기능:
 ### v0.2.0 - 2026-05-16
 
 - Ralph goal 흐름 강화: Goal Readiness Gate, Goal Scorecard, progress ledger 구조를 추가해 목표가 불명확할 때 바로 실행하지 않고 필요한 정보를 먼저 요구하도록 정리했습니다.
+- Codex App native goal preflight 추가: Composer Command에 `/goal`이 없더라도 내부 `get_goal`/`create_goal`/`update_goal` tool이 노출된 세션에서는 먼저 native goal 상태를 확인하고, 명확한 macro goal이 없으면 실행 전에 사용자에게 요구하도록 정리했습니다.
 - Subagent/worker 사용 범위 확대: `ralplan`, `ralph-execute`, `ralph-qa`, `visual-ralph-qa`가 non-trivial 작업에서 worker-first 판단을 수행하고, main-only 선택 시 사유를 남기도록 업데이트했습니다.
 - Worker handoff 누적 기록 추가: tmux-visible worker run마다 `worker_handoff_summary.md`를 생성하고 `.ralph/worker-runs/` 아래에 누적 기록과 `INDEX.md`를 남기도록 구현했습니다.
 - Watcher/E2E 검증 강화: `tmux-worker-watch`가 handoff summary를 우선 읽고, E2E가 persistent handoff bundle과 index 생성까지 검증하도록 확장했습니다.

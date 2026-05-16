@@ -13,7 +13,13 @@ Use this shared contract when a Ralph workflow uses Codex `goal`.
 
 ## Goal Readiness Gate
 
-When a Ralph workflow is asked to use goal tracking, do not start substantive skill work until the macro goal is auditable.
+When a Ralph workflow is asked to use goal tracking, native goal activation, or a background continue-until-done loop, do not start substantive skill work until the macro goal is auditable.
+
+Treat these as goal-tracking requests:
+
+- The user says to use `goal`, `native goal`, `create_goal`, `Codex App goal`, or `goal tracking`.
+- The user asks Ralph to run as a persistent/background loop, continue until completion, or keep working across phases.
+- The user asks for worker-assisted execution while also asking for durable objective tracking.
 
 Required before creating a goal or acting under a goal-aware skill:
 
@@ -27,11 +33,30 @@ Required before creating a goal or acting under a goal-aware skill:
 
 If the user asks to use `goal` but any required field is missing, stop before planning, editing, worker launch, QA loops, review, or completion. Ask the user for the missing goal information directly and concisely. Do not invent measurable targets from vibes, do not create a phase-specific fallback goal, and do not continue by treating the ambiguous request as an ordinary execution request.
 
+## Native Goal Activation Preflight
+
+Use this preflight whenever a goal-tracking request is detected. It is meant to let Codex App sessions use native goal tools internally even when `/goal` is not exposed as a Composer command.
+
+1. Try to inspect native goal state with `get_goal` if the tool is available.
+2. If the tool is unavailable, do not claim a native goal is active. Report `Native Goal: unavailable` and either stop if the user required native goal specifically, or continue only with an explicit Ralph ledger fallback.
+3. If an active goal exists, compare it with the current request before doing substantive work.
+4. If the goal is paused, budget-limited, complete, or mismatched, stop and ask for direction instead of silently continuing.
+5. If no active goal exists and the user explicitly requested native goal activation, create a top-level goal only after the Goal Readiness Gate passes and the current skill is allowed to create one.
+6. If the objective, scope, done criteria, scorecard, fast check, full check, or pause boundaries are missing, ask for those fields before planning, editing, QA, visual QA, review, or worker launch.
+7. Never say goal tracking is active unless `create_goal` succeeded or `get_goal` returned a matching active goal.
+8. Only call `update_goal complete` after the Completion Audit proves the full macro objective is done.
+
+Skill permissions:
+
+- `deep-interview` and `ralplan` are the preferred goal creation points.
+- `ralph-execute`, `ralph-qa`, and `visual-ralph-qa` may create a native top-level goal only when the user explicitly requested native goal activation and the full Goal Readiness Gate is already satisfied in the request or handoff. They must not create phase-specific goals.
+- `analyze`, `code-review`, and watcher skills must not create goals. They may inspect goal state, report alignment, and route to a goal creation skill.
+
 ## Creation Policy
 
 Create one goal only when all are true:
 
-- The user explicitly asks for goal tracking, for example `goal tracking으로 진행해줘`, `create_goal로 상위 목표 만들고 시작해줘`, or `Ralph 전체 흐름을 goal로 관리해줘`.
+- The user explicitly asks for goal tracking or native goal activation, for example `goal tracking으로 진행해줘`, `native goal로 돌려줘`, `create_goal로 상위 목표 만들고 시작해줘`, or `Ralph 전체 흐름을 goal로 관리해줘`.
 - The objective is a macro workflow, not a single skill phase.
 - Goal, scope, constraints, and done criteria are clear enough to audit later.
 - The Goal Readiness Gate has passed, including a usable scorecard and fast/full checks.
@@ -42,7 +67,7 @@ Preferred creation points:
 - `deep-interview`: near closure, after the macro objective is clarified.
 - `ralplan`: during planning, after the objective and done criteria are stable.
 
-Do not create goals from `analyze`, `ralph-execute`, `ralph-qa`, `visual-ralph-qa`, `code-review`, or `tmux-worker-watch`. Those skills should read the existing goal and report missing, mismatched, paused, or budget-limited state.
+Do not create goals from `analyze`, `code-review`, or `tmux-worker-watch`. `ralph-execute`, `ralph-qa`, and `visual-ralph-qa` should normally read the existing goal and report missing, mismatched, paused, or budget-limited state; they may create a top-level goal only under the Native Goal Activation Preflight permission above.
 
 ## Status Policy
 

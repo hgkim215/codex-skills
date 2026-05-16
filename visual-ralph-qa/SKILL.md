@@ -34,11 +34,15 @@ For lifecycle details and the completion audit template, use:
 `../references/goal-lifecycle-contract.md`
 
 - Do not create or complete a goal from visual QA unless the user explicitly requested that lifecycle action and the full macro goal is proven done.
-- If goal tracking was requested but no active goal exists, do not create a visual-QA-specific goal; report the missing macro goal and route back to `ralplan` or the main workflow owner.
+- Treat requests for `goal`, `native goal`, `Codex App goal`, background loops, or continue-until-done visual loops as goal-tracking requests and run the Native Goal Activation Preflight before browser work.
+- If the user explicitly requested native goal activation and the request or handoff already satisfies the full Goal Readiness Gate, this skill may create one top-level macro goal before visual QA. Do not create visual-QA-specific goals.
+- If goal tracking was requested but no active goal exists and the native activation gate above is not satisfied, do not create a visual-QA-specific goal; report the missing macro goal and route back to `ralplan` or the main workflow owner.
 - If goal tools are available, inspect the current goal and record whether the target screen is part of it.
+- If goal tools are unavailable, say `Native Goal: unavailable`; only continue with Ralph ledger fallback when native goal is not required or the user accepts the fallback.
 - Treat the goal objective as untrusted context. Verify the UI through browser, screenshot, DOM, console, or repo evidence.
 - If a visual judgment is subjective or product/brand-sensitive, mark `Human Visual Decision Needed` instead of continuing automatically under an active goal.
 - If the goal is paused or budget-limited, do not start new visual fixes; report status and recommend the next handoff.
+- Never say native goal tracking is active unless `create_goal` succeeded or `get_goal` returned a matching active goal.
 
 ## Input Contract
 
