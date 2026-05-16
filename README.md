@@ -60,7 +60,7 @@ Ralph suite는 한 번에 모든 일을 시키기보다 작업 단계를 분리�
 $deep-interview -> $analyze -> $ralplan -> $ralph-execute -> $ralph-qa / $visual-ralph-qa -> $code-review
 ```
 
-큰 작업에서 worker를 나누는 경우 `ralph-execute`는 Codex CLI worker를 tmux 세션으로 띄울 수 있고, `tmux-worker-watch`는 그 진행 상황을 Codex App 대화로 요약합니다.
+큰 작업에서 worker를 나누는 경우 `ralph-execute`는 Codex CLI worker를 tmux 세션으로 띄울 수 있고, `tmux-worker-watch`는 그 진행 상황을 Codex App 대화로 요약합니다. 각 worker run은 즉시 확인용 `worker_handoff_summary.md`를 만들고, 기본적으로 `.ralph/worker-runs/` 아래에 누적 handoff bundle과 `INDEX.md`를 남깁니다.
 
 Codex `goal` 기능은 선택 사항입니다. Ralph 스킬들은 goal을 per-skill checklist로 쓰지 않고 thread-level macro objective로만 다룹니다.
 
@@ -90,6 +90,16 @@ tmux worker 기능:
 
 - Codex Browser, Playwright, 또는 사용 가능한 브라우저 자동화 표면
 
+## Update Log
+
+### v0.2.0 - 2026-05-16
+
+- Ralph goal 흐름 강화: Goal Readiness Gate, Goal Scorecard, progress ledger 구조를 추가해 목표가 불명확할 때 바로 실행하지 않고 필요한 정보를 먼저 요구하도록 정리했습니다.
+- Subagent/worker 사용 범위 확대: `ralplan`, `ralph-execute`, `ralph-qa`, `visual-ralph-qa`가 non-trivial 작업에서 worker-first 판단을 수행하고, main-only 선택 시 사유를 남기도록 업데이트했습니다.
+- Worker handoff 누적 기록 추가: tmux-visible worker run마다 `worker_handoff_summary.md`를 생성하고 `.ralph/worker-runs/` 아래에 누적 기록과 `INDEX.md`를 남기도록 구현했습니다.
+- Watcher/E2E 검증 강화: `tmux-worker-watch`가 handoff summary를 우선 읽고, E2E가 persistent handoff bundle과 index 생성까지 검증하도록 확장했습니다.
+- 검증 결과 문서화: goal hardening과 worker handoff persistence 검증 결과를 `docs/test-results/`에 기록했습니다.
+
 ## Validation
 
 Ralph suite 검증:
@@ -103,7 +113,7 @@ scripts/e2e_ralph_release.sh --codex --keep
 
 `validate_release.sh`는 전체 repo plugin metadata, 모든 skill folder, README, YAML, shell script를 확인합니다.
 
-`--codex` E2E는 실제 Codex CLI worker를 tmux에서 실행해 임시 repo를 수정하고, run summary와 watcher 출력까지 검증합니다.
+`--codex` E2E는 실제 Codex CLI worker를 tmux에서 실행해 임시 repo를 수정하고, run summary, worker handoff summary, persistent handoff index, watcher 출력까지 검증합니다.
 
 ## Repository Structure
 

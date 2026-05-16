@@ -21,6 +21,8 @@ Restart Codex after installation.
 - `tmux`
 - A running tmux session or a status directory such as a Ralph worker `RUN_DIR`
 
+For Ralph worker runs, the watcher prefers `worker_handoff_summary.md` when present and can point you to the persistent `.ralph/worker-runs/<run-id>/worker_handoff_summary.md` audit record.
+
 ## Example
 
 ```text

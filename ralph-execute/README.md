@@ -32,4 +32,10 @@ tmux-visible worker execution additionally needs:
 $ralph-execute 위 계획을 구현하고 검증까지 진행해줘.
 ```
 
-For worker runs, use `$tmux-worker-watch` to summarize progress from the generated `RUN_DIR` or tmux session.
+For worker runs, the launcher writes:
+
+- `RUN_DIR/worker_handoff_summary.md`: immediate user-facing summary of every worker
+- `.ralph/worker-runs/<run-id>/worker_handoff_summary.md`: persistent copy inside the workspace
+- `.ralph/worker-runs/INDEX.md`: cumulative index of worker-assisted runs
+
+Use `$tmux-worker-watch` to summarize progress from the generated `RUN_DIR` or tmux session.
