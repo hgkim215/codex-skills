@@ -8,7 +8,7 @@
 
 Use evidence in this order:
 
-1. Structured run metadata: `run_summary.md`, `goal.md`, `workers.tsv`, `status/*`, `results/*.last_message.md`, `results/*.out`.
+1. Structured run metadata: `worker_handoff_summary.md`, `run_summary.md`, `goal.md`, `workers.tsv`, `status/*`, `results/*.last_message.md`, `results/*.out`.
 2. tmux metadata: sessions, windows, panes, current command, pane path, active/dead flags.
 3. Redacted pane tail excerpts.
 
@@ -42,6 +42,7 @@ When pointed at a `cross-verify` run directory:
 
 When pointed at a `ralph-execute` worker run directory:
 
+- Read `worker_handoff_summary.md` first when present to see the user-facing summary of what each worker did.
 - Read `goal.md` when present to identify the macro objective and phase context.
 - Read `workers.tsv` for the intended worker list and write scopes.
 - Read `status/<worker>.status` for exit status.
@@ -50,6 +51,7 @@ When pointed at a `ralph-execute` worker run directory:
 - Read `status/<worker>.started_at_epoch` and `status/<worker>.finished_at_epoch` when present to report `duration_seconds`.
 - Prefer `results/<worker>.last_message.md` for the worker's final handoff.
 - Use `results/<worker>.out` only for logs, command failures, or missing final-message diagnosis.
+- If a persistent `.ralph/worker-runs/<run-id>/worker_handoff_summary.md` path exists in the summary, report it as the durable audit record.
 - Do not assume worker edits are final. Main Codex still owns integration and final verification.
 
 ## Read-Only Boundary

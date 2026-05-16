@@ -7,6 +7,8 @@ goal_file=""
 run_name="ralph"
 open_terminal=1
 wait_for_results=0
+handoff_root=""
+persist_handoff=1
 
 usage() {
   cat <<'USAGE'
@@ -22,6 +24,9 @@ Required:
 Options:
   --run-name NAME      Short run slug. Default: ralph.
   --goal-file FILE     Optional goal contract/context copied to RUN_DIR/goal.md and prepended to worker prompts.
+  --handoff-root DIR   Persistent worker handoff root. Default: WORKDIR/.ralph/worker-runs.
+  --persist-handoff    Persist worker handoff docs into the workspace. Default.
+  --no-persist-handoff Keep handoff docs only in RUN_DIR.
   --open-terminal     Open Ghostty or Terminal attached to the tmux session. Default.
   --no-open-terminal  Do not open a terminal app.
   --wait              Wait for all worker status files and write final summary.
@@ -35,6 +40,7 @@ Environment:
   RALPH_WORKER_TERMINAL_APP     auto, ghostty, or terminal. Default: auto.
   RALPH_WORKER_TMUX_SOCKET      Optional tmux socket name for isolated tests.
   RALPH_WORKER_TEST_COMMAND     Test-only shell command run instead of codex exec.
+  RALPH_WORKER_HANDOFF_ROOT     Persistent handoff root when --handoff-root is omitted.
 USAGE
 }
 
@@ -93,6 +99,19 @@ while [[ "$#" -gt 0 ]]; do
       run_name="$2"
       shift 2
       ;;
+    --handoff-root)
+      [[ "$#" -ge 2 ]] || fail "--handoff-root requires a value"
+      handoff_root="$2"
+      shift 2
+      ;;
+    --persist-handoff)
+      persist_handoff=1
+      shift
+      ;;
+    --no-persist-handoff)
+      persist_handoff=0
+      shift
+      ;;
     --open-terminal)
       open_terminal=1
       shift
@@ -143,6 +162,25 @@ session_name="ralph-${safe_run_name}-${run_stamp}"
 session_name="$(printf '%s' "$session_name" | cut -c 1-80)"
 run_dir="$(mktemp -d "${TMPDIR:-/tmp}/ralph-workers.${safe_run_name}.XXXXXX")"
 mkdir -p "$run_dir/prompts" "$run_dir/results" "$run_dir/status"
+
+handoff_base=""
+handoff_run_dir=""
+if [[ "$persist_handoff" -eq 1 ]]; then
+  if [[ -n "$handoff_root" ]]; then
+    handoff_base="$handoff_root"
+  elif [[ -n "${RALPH_WORKER_HANDOFF_ROOT:-}" ]]; then
+    handoff_base="$RALPH_WORKER_HANDOFF_ROOT"
+  else
+    handoff_base="$workdir/.ralph/worker-runs"
+  fi
+  handoff_run_dir="$handoff_base/${safe_run_name}-${run_stamp}"
+  if ! mkdir -p "$handoff_run_dir/last_messages"; then
+    printf 'WARN: could not create persistent handoff directory: %s\n' "$handoff_run_dir" >&2
+    persist_handoff=0
+    handoff_base=""
+    handoff_run_dir=""
+  fi
+fi
 
 if [[ -n "$goal_file" ]]; then
   cp "$goal_file" "$run_dir/goal.md"
@@ -291,8 +329,22 @@ set -u
 
 run_dir="$RALPH_RUN_DIR"
 summary="$run_dir/run_summary.md"
+handoff_summary="$run_dir/worker_handoff_summary.md"
 workers="$run_dir/workers.tsv"
 goal_file="$run_dir/goal.md"
+persistent_root="${RALPH_PERSISTENT_HANDOFF_ROOT:-}"
+persistent_dir="${RALPH_PERSISTENT_HANDOFF_DIR:-}"
+run_name="${RALPH_RUN_NAME:-ralph}"
+run_stamp="${RALPH_RUN_STAMP:-}"
+worker_count="${RALPH_WORKER_COUNT:-}"
+
+timestamp() {
+  date '+%Y-%m-%dT%H:%M:%S%z'
+}
+
+clean_cell() {
+  printf '%s' "$1" | tr '\r\n|' '   '
+}
 
 result_state() {
   local file="$1"
@@ -405,6 +457,117 @@ fi
   done <"$workers"
 } >"$summary"
 
+{
+  printf '# Ralph Worker Handoff Summary\n\n'
+  printf -- '- Overall outcome: `%s`\n' "$overall"
+  printf -- '- Generated: `%s`\n' "$(timestamp)"
+  printf -- '- Run name: `%s`\n' "$run_name"
+  if [[ -n "$run_stamp" ]]; then
+    printf -- '- Run stamp: `%s`\n' "$run_stamp"
+  fi
+  printf -- '- Run dir: `%s`\n' "$run_dir"
+  if [[ -n "$persistent_dir" ]]; then
+    printf -- '- Persistent dir: `%s`\n' "$persistent_dir"
+  fi
+  if [[ -f "$goal_file" ]]; then
+    printf -- '- Goal context: present (`%s`)\n' "$goal_file"
+  else
+    printf -- '- Goal context: missing\n'
+  fi
+  printf '\n## Workers At A Glance\n\n'
+  printf '| Worker | Title | Progress | Status | Duration(s) | Write scope | Final handoff |\n'
+  printf '| --- | --- | --- | --- | --- | --- | --- |\n'
+  while IFS="$(printf '\t')" read -r worker_id title prompt_file write_scope; do
+    [[ -n "${worker_id:-}" ]] || continue
+    printf '| `%s` | %s | %s | %s | %s | `%s` | %s |\n' \
+      "$worker_id" \
+      "$(clean_cell "$title")" \
+      "$(progress_value "$worker_id")" \
+      "$(status_value "$worker_id")" \
+      "$(duration_value "$worker_id")" \
+      "$(clean_cell "$write_scope")" \
+      "$(result_state "$run_dir/results/$worker_id.last_message.md")"
+  done <"$workers"
+
+  printf '\n## Worker Details\n'
+  while IFS="$(printf '\t')" read -r worker_id title prompt_file write_scope; do
+    [[ -n "${worker_id:-}" ]] || continue
+    last_message="$run_dir/results/$worker_id.last_message.md"
+    result_file="$run_dir/results/$worker_id.out"
+    started="$(cat "$run_dir/status/$worker_id.started_at" 2>/dev/null || printf 'missing')"
+    finished="$(cat "$run_dir/status/$worker_id.finished_at" 2>/dev/null || printf 'missing')"
+
+    printf '\n### `%s` - %s\n\n' "$worker_id" "$title"
+    printf -- '- Progress: `%s`\n' "$(progress_value "$worker_id")"
+    printf -- '- Status: `%s`\n' "$(status_value "$worker_id")"
+    printf -- '- Duration(s): `%s`\n' "$(duration_value "$worker_id")"
+    printf -- '- Started: `%s`\n' "$started"
+    printf -- '- Finished: `%s`\n' "$finished"
+    printf -- '- Write scope: `%s`\n' "$write_scope"
+    printf -- '- Result log: `%s` (%s)\n' "$result_file" "$(result_state "$result_file")"
+    printf -- '- Last message: `%s` (%s)\n\n' "$last_message" "$(result_state "$last_message")"
+    printf '#### Final Handoff\n\n'
+    if [[ -s "$last_message" ]]; then
+      cat "$last_message"
+      printf '\n'
+    elif [[ -f "$last_message" ]]; then
+      printf '_Worker produced an empty final handoff. Inspect the result log for diagnosis._\n'
+    else
+      printf '_Worker final handoff is missing. Inspect the result log for diagnosis._\n'
+    fi
+  done <"$workers"
+} >"$handoff_summary"
+
+if [[ -n "$persistent_dir" ]]; then
+  if mkdir -p "$persistent_dir/last_messages"; then
+    cp "$summary" "$persistent_dir/run_summary.md" 2>/dev/null || true
+    cp "$handoff_summary" "$persistent_dir/worker_handoff_summary.md" 2>/dev/null || true
+    cp "$workers" "$persistent_dir/workers.tsv" 2>/dev/null || true
+    if [[ -f "$goal_file" ]]; then
+      cp "$goal_file" "$persistent_dir/goal.md" 2>/dev/null || true
+    fi
+    while IFS="$(printf '\t')" read -r worker_id title prompt_file write_scope; do
+      [[ -n "${worker_id:-}" ]] || continue
+      if [[ -f "$run_dir/results/$worker_id.last_message.md" ]]; then
+        cp "$run_dir/results/$worker_id.last_message.md" "$persistent_dir/last_messages/$worker_id.md" 2>/dev/null || true
+      fi
+    done <"$workers"
+    {
+      printf 'generated_at\t%s\n' "$(timestamp)"
+      printf 'run_name\t%s\n' "$run_name"
+      printf 'run_stamp\t%s\n' "$run_stamp"
+      printf 'overall\t%s\n' "$overall"
+      printf 'workers\t%s\n' "$worker_count"
+      printf 'run_dir\t%s\n' "$run_dir"
+      printf 'handoff_summary\t%s\n' "$persistent_dir/worker_handoff_summary.md"
+    } >"$persistent_dir/metadata.tsv"
+  fi
+fi
+
+if [[ -n "$persistent_root" && -d "$persistent_root" ]]; then
+  index_tmp="$persistent_root/INDEX.md.tmp.$$"
+  {
+    printf '# Ralph Worker Run Index\n\n'
+    printf 'Cumulative worker handoff history for Ralph tmux-visible subagent runs.\n\n'
+    printf '| Generated | Run | Outcome | Workers | Summary |\n'
+    printf '| --- | --- | --- | --- | --- |\n'
+    for metadata_file in "$persistent_root"/*/metadata.tsv; do
+      [[ -f "$metadata_file" ]] || continue
+      generated="$(awk -F '\t' '$1 == "generated_at" { print $2; exit }' "$metadata_file")"
+      metadata_run_name="$(awk -F '\t' '$1 == "run_name" { print $2; exit }' "$metadata_file")"
+      metadata_overall="$(awk -F '\t' '$1 == "overall" { print $2; exit }' "$metadata_file")"
+      metadata_workers="$(awk -F '\t' '$1 == "workers" { print $2; exit }' "$metadata_file")"
+      metadata_summary="$(awk -F '\t' '$1 == "handoff_summary" { print $2; exit }' "$metadata_file")"
+      printf '| %s | `%s` | `%s` | %s | `%s` |\n' \
+        "$(clean_cell "$generated")" \
+        "$(clean_cell "$metadata_run_name")" \
+        "$(clean_cell "$metadata_overall")" \
+        "$(clean_cell "$metadata_workers")" \
+        "$(clean_cell "$metadata_summary")"
+    done
+  } >"$index_tmp" && mv "$index_tmp" "$persistent_root/INDEX.md"
+fi
+
 printf '%s\n' "$summary"
 EOF
 
@@ -481,7 +644,7 @@ while IFS="$(printf '\t')" read -r worker_id title prompt_file write_scope; do
 done <"$normalized_workers"
 
 tmux_run select-layout -t "$session_name:workers" tiled >/dev/null
-tmux_run new-window -t "$session_name" -n monitor "RALPH_RUN_DIR=$(shell_quote "$run_dir") bash $(shell_quote "$run_dir/watch_status.sh"); printf '\n[ralph monitor done]\n'; exec bash -l" >/dev/null
+tmux_run new-window -t "$session_name" -n monitor "RALPH_RUN_DIR=$(shell_quote "$run_dir") RALPH_PERSISTENT_HANDOFF_ROOT=$(shell_quote "$handoff_base") RALPH_PERSISTENT_HANDOFF_DIR=$(shell_quote "$handoff_run_dir") RALPH_RUN_NAME=$(shell_quote "$safe_run_name") RALPH_RUN_STAMP=$(shell_quote "$run_stamp") RALPH_WORKER_COUNT=$(shell_quote "$worker_count") bash $(shell_quote "$run_dir/watch_status.sh"); printf '\n[ralph monitor done]\n'; exec bash -l" >/dev/null
 tmux_run select-window -t "$session_name:workers" >/dev/null
 
 attach_command() {
@@ -551,6 +714,12 @@ fi
 echo "ATTACH_COMMAND=$(attach_command)"
 echo "WORKERS=$worker_count"
 echo "RUN_SUMMARY=$run_dir/run_summary.md"
+echo "WORKER_HANDOFF_SUMMARY=$run_dir/worker_handoff_summary.md"
+if [[ "$persist_handoff" -eq 1 ]]; then
+  echo "PERSISTENT_HANDOFF_DIR=$handoff_run_dir"
+  echo "PERSISTENT_HANDOFF_SUMMARY=$handoff_run_dir/worker_handoff_summary.md"
+  echo "PERSISTENT_HANDOFF_INDEX=$handoff_base/INDEX.md"
+fi
 
 if [[ "$wait_for_results" -eq 1 ]]; then
   deadline=$((SECONDS + wait_timeout_seconds))
@@ -565,20 +734,28 @@ if [[ "$wait_for_results" -eq 1 ]]; then
     [[ "$all_done" -eq 1 ]] && break
     if ((SECONDS >= deadline)); then
       echo "TIMEOUT: worker status files still missing after ${wait_timeout_seconds}s."
-      RALPH_RUN_DIR="$run_dir" "$run_dir/write_run_summary.sh" >/dev/null
+      RALPH_RUN_DIR="$run_dir" RALPH_PERSISTENT_HANDOFF_ROOT="$handoff_base" RALPH_PERSISTENT_HANDOFF_DIR="$handoff_run_dir" RALPH_RUN_NAME="$safe_run_name" RALPH_RUN_STAMP="$run_stamp" RALPH_WORKER_COUNT="$worker_count" "$run_dir/write_run_summary.sh" >/dev/null
       echo "RUN_SUMMARY=$run_dir/run_summary.md"
+      echo "WORKER_HANDOFF_SUMMARY=$run_dir/worker_handoff_summary.md"
+      if [[ "$persist_handoff" -eq 1 ]]; then
+        echo "PERSISTENT_HANDOFF_SUMMARY=$handoff_run_dir/worker_handoff_summary.md"
+      fi
       exit 124
     fi
     sleep 1
   done
 
-  summary_path="$(RALPH_RUN_DIR="$run_dir" "$run_dir/write_run_summary.sh")"
+  summary_path="$(RALPH_RUN_DIR="$run_dir" RALPH_PERSISTENT_HANDOFF_ROOT="$handoff_base" RALPH_PERSISTENT_HANDOFF_DIR="$handoff_run_dir" RALPH_RUN_NAME="$safe_run_name" RALPH_RUN_STAMP="$run_stamp" RALPH_WORKER_COUNT="$worker_count" "$run_dir/write_run_summary.sh")"
   echo "DONE: all worker status files are present."
   while IFS="$(printf '\t')" read -r worker_id title prompt_file write_scope; do
     [[ -n "${worker_id:-}" ]] || continue
     printf '  %s=%s\n' "$worker_id" "$(cat "$run_dir/status/$worker_id.status")"
   done <"$normalized_workers"
   echo "RUN_SUMMARY=$summary_path"
+  echo "WORKER_HANDOFF_SUMMARY=$run_dir/worker_handoff_summary.md"
+  if [[ "$persist_handoff" -eq 1 ]]; then
+    echo "PERSISTENT_HANDOFF_SUMMARY=$handoff_run_dir/worker_handoff_summary.md"
+  fi
 else
-  RALPH_RUN_DIR="$run_dir" "$run_dir/write_run_summary.sh" >/dev/null
+  RALPH_RUN_DIR="$run_dir" RALPH_PERSISTENT_HANDOFF_ROOT="$handoff_base" RALPH_PERSISTENT_HANDOFF_DIR="$handoff_run_dir" RALPH_RUN_NAME="$safe_run_name" RALPH_RUN_STAMP="$run_stamp" RALPH_WORKER_COUNT="$worker_count" "$run_dir/write_run_summary.sh" >/dev/null
 fi

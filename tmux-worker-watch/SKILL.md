@@ -72,7 +72,7 @@ Identify the best available target:
 - current or likely worker tmux sessions
 - all tmux sessions when the user asks for a broad status pass
 
-If the user provided a `ralph-execute` worker run directory, read `run_summary.md`, `workers.tsv`, `status/*`, `results/*.last_message.md`, and `results/*.out` before inspecting pane tails.
+If the user provided a `ralph-execute` worker run directory, read `worker_handoff_summary.md` first when present, then `run_summary.md`, `workers.tsv`, `status/*`, `results/*.last_message.md`, and `results/*.out` before inspecting pane tails.
 
 If the user provided a `cross-verify` run directory, read `run_summary.md`, `status/*`, and `results/*.out` before inspecting pane tails.
 
@@ -145,7 +145,7 @@ Use this shape by default:
 ## Recommended Handoff
 ```
 
-`Goal Context` should be `None` unless a run directory goal file or current goal status is available. Keep `Evidence` short. Include status values, duration seconds, run summary lines, or short pane-tail excerpts only when they explain the classification.
+`Goal Context` should be `None` unless a run directory goal file or current goal status is available. Keep `Evidence` short. Include status values, duration seconds, worker handoff summary lines, run summary lines, or short pane-tail excerpts only when they explain the classification. If a persistent `.ralph/worker-runs/.../worker_handoff_summary.md` path is visible, include it so the user can open the accumulated record.
 
 ## Stop Rules
 

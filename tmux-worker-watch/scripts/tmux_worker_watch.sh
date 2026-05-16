@@ -152,6 +152,7 @@ report_status_dir() {
   local status_root="$dir/status"
   local results_root="$dir/results"
   local summary="$dir/run_summary.md"
+  local handoff_summary="$dir/worker_handoff_summary.md"
   local goal_file="$dir/goal.md"
   local workers_file="$dir/workers.tsv"
   local agents_list=""
@@ -176,6 +177,14 @@ report_status_dir() {
     sed -n '1,40p' "$summary" | redact | sed 's/^/  /'
   else
     printf 'run_summary: missing\n'
+  fi
+
+  if [ -f "$handoff_summary" ]; then
+    printf 'worker_handoff_summary: present\n'
+    printf 'worker_handoff_summary_excerpt:\n'
+    sed -n '1,80p' "$handoff_summary" | redact | sed 's/^/  /'
+  elif [ -f "$workers_file" ]; then
+    printf 'worker_handoff_summary: missing\n'
   fi
 
   if [ -f "$goal_file" ]; then
