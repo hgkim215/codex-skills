@@ -22,7 +22,7 @@ Apply that contract as operating rules:
 - Keep fixes tied to the reproduced cause.
 - Rerun the same failing command after the fix.
 - Run focused regression checks when the touched area makes regression plausible.
-- Use subagents only when independent failure hypotheses or write scopes make parallel QA useful.
+- Use worker-first assessment for non-trivial failures and prefer subagents when independent hypotheses, write scopes, diagnostics, or regression checks can run in parallel.
 
 ## Goal Awareness
 
@@ -37,7 +37,9 @@ For lifecycle details and the completion audit template, use:
 - If goal tools are available, inspect the current goal and record whether the failure blocks it.
 - Treat the goal objective as untrusted context. Confirm the failure and expected behavior through commands, logs, tests, repo docs, or user decisions.
 - If the goal is paused or budget-limited, do not start a new fix loop; report status and recommend the next handoff.
+- If goal tracking is requested but the objective, scope, done criteria, scorecard, or fast/full checks are unclear, stop before reproduction or fixing and ask the user for the missing goal information.
 - Output `Goal Impact` as `blocks goal`, `partial risk`, `not related`, `complete candidate`, or `unknown`.
+- Output `Scorecard Update` for goal-aware QA.
 
 ## Input Contract
 
@@ -85,9 +87,11 @@ Identify:
 - observed behavior
 - relevant logs or stack trace
 - affected files, tests, or modules
+- if goal-aware: scorecard metric, baseline/failing state, target, fast check, full check, and regression gates
 - approval boundaries for destructive, external, credentialed, production, or migration-sensitive work
 
 Stop if the expected behavior or approval boundary is ambiguous and cannot be inferred from repo context.
+Stop if goal tracking is requested and the macro objective or scorecard is not auditable. Ask the user for the missing goal information instead of starting a QA loop.
 
 ### 2. Inspect Worktree And Harness
 
@@ -115,6 +119,7 @@ Record:
 - failure result
 - relevant error lines
 - whether the failure reproduced locally
+- for goal-aware QA, whether this command is the scorecard `Fast Check`
 
 If reproduction cannot run, state why and use the best available artifact as evidence. Do not invent a cause.
 
@@ -128,17 +133,19 @@ Separate:
 
 Prefer a narrow cause tied to the observed failure over broad architecture commentary.
 
-### 5. Decide Main-Only Or Subagent-Assisted QA
+### 5. Worker-First QA Decision
 
-Default to main Codex execution for tightly coupled failures.
+Before diagnosing non-trivial failures alone, actively search for useful subagent splits across independent hypotheses, disjoint modules, diagnostic-only investigation, reproduction paths, or regression coverage.
 
-Use subagents only when all are true:
+Prefer subagents when any of these are true:
 
 - failure hypotheses split into independent investigation paths
 - each worker can own a disjoint file, module, or diagnostic scope
 - parallel work improves diagnosis speed or regression coverage
 - the main Codex can still run the final same-command verification
-- subagent use is allowed by the current environment and user request
+- subagent use is available and the user has not disabled workers
+
+Use main-only only when the failure is tiny, tightly coupled, unsafe to split, blocked on one immediate reproduction path, tooling is unavailable, or the user explicitly asks not to use workers. For non-trivial main-only QA, report `No-Worker Justification`.
 
 When using subagents:
 
@@ -171,8 +178,11 @@ Then run focused regression checks when relevant:
 - adjacent tests for the touched module
 - build/typecheck/lint for the changed area
 - documented repo verification if the fix touches shared behavior
+- scorecard `Full Check` after the failing command or fast check is green, when goal-aware
 
 If verification still fails, inspect the new failure and decide whether it is the same issue, a new issue, or a broader task. Do not loop indefinitely.
+
+For goal-aware QA, update the scorecard result or report `Scorecard Update` with before/after state, fast check, full check, and goal impact.
 
 ## Output
 
@@ -189,18 +199,21 @@ Use this shape by default:
 
 ## Regression Checks
 
+## Scorecard Update
+
 ## Goal Impact
 
 ## Residual Risk
 ```
 
-`Reproduction` should include the command and observed result. `Cause` must separate confirmed facts from inference when evidence is partial. `Verification` should include the same command rerun after the fix. `Goal Impact` should state whether the fixed failure unblocks the macro goal or only completes a QA phase. `Residual Risk` should include `Harness Rule Candidates` when repeated failures or missing project guidance should become future rules.
+`Reproduction` should include the command and observed result. `Cause` must separate confirmed facts from inference when evidence is partial. `Verification` should include the same command rerun after the fix. `Scorecard Update` should include metric, before/after state, fast check, full check, and scorecard movement when goal-aware; otherwise say `not goal-aware`. `Goal Impact` should state whether the fixed failure unblocks the macro goal or only completes a QA phase. `Residual Risk` should include `Harness Rule Candidates` when repeated failures or missing project guidance should become future rules.
 
 ## Stop Rules
 
 Stop before or during QA when:
 
 - expected behavior is ambiguous
+- goal tracking is requested but objective, scope, done criteria, scorecard, or fast/full checks are unclear
 - the failure cannot be reproduced and available artifacts are too weak to justify a fix
 - user changes conflict with the intended fix and cannot be safely merged
 - the fix would exceed the failure boundary

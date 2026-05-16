@@ -30,10 +30,13 @@ When a thread goal is available, classify how the failure affects it:
 
 If goal tracking was requested but no active goal exists, report that the macro goal was never initialized instead of creating a QA-specific goal. Do not complete a goal from QA unless the full objective, not just the failing command, has been audited.
 
+If goal tracking is requested but the macro objective, scope, done criteria, scorecard, or fast/full checks are unclear, stop before reproduction or fixing. Ask the user for the missing goal information instead of starting a QA loop under an ambiguous goal.
+
 ## Reproduction First
 
 - Reproduce locally before editing when feasible.
 - Record the exact command, failure result, and relevant error lines.
+- For goal-aware QA, prefer the `Fast Check` from the Goal Scorecard as the first reproduction command when it matches the failure.
 - If local reproduction is impossible, explain the blocker and mark the cause as inference unless another artifact proves it.
 
 ## Fix Boundary
@@ -45,8 +48,10 @@ If goal tracking was requested but no active goal exists, report that the macro 
 
 ## Subagent Policy
 
-- Default to main Codex execution for tightly coupled failures.
-- Use subagents only for independent hypotheses, disjoint write scopes, or parallel regression coverage.
+- Use worker-first assessment for non-trivial failures. Before diagnosing alone, look for independent hypotheses, disjoint write scopes, parallel reproduction paths, or parallel regression coverage.
+- Prefer subagents for independent hypotheses, disjoint write scopes, diagnostic-only investigations, or parallel regression coverage.
+- Use main-only only when the failure is tiny, tightly coupled, unsafe to split, blocked on one immediate reproduction path, tooling is unavailable, or the user explicitly asks not to use workers.
+- When selecting main-only for non-trivial QA, report `No-Worker Justification`.
 - Give each worker explicit ownership of files, modules, diagnostics, or tests.
 - Tell workers they are not alone in the codebase and must not revert user or other-agent changes.
 - Main Codex must decide the final cause, integrate changes, and rerun the same failing command.
@@ -54,9 +59,22 @@ If goal tracking was requested but no active goal exists, report that the macro 
 ## Verification And Regression
 
 - Rerun the same command that reproduced the failure after the fix.
+- For goal-aware QA, report whether the fix moved the scorecard metric from baseline toward target.
 - Add focused regression checks when the touched behavior is shared or high risk.
+- Run the `Full Check` only after the failing command or fast check is green, unless the full check is the smallest available reproduction.
 - If the same command still fails, classify the result as same issue, new issue, or broader task.
 - Do not claim success without command evidence unless verification is blocked and the blocker is reported.
+
+## Scorecard Update
+
+For goal-aware QA, update or report:
+
+- `Metric`: the scorecard signal affected by the failure.
+- `Before`: reproduced baseline or failing state.
+- `After`: result after the fix.
+- `Fast Check`: command or observable check rerun.
+- `Full Check`: final check run, skipped, or blocked.
+- `Goal Impact`: blocks goal, partial risk, not related, complete candidate, or unknown.
 
 ## Stop And Approval Boundaries
 

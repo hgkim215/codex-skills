@@ -65,8 +65,10 @@ If goal tracking was requested but no active goal exists, report that the macro 
 
 ## Subagent Policy
 
-- Default to main Codex execution for tightly coupled visual fixes.
-- Use subagents only for independent screens, disjoint component scopes, or parallel viewport review.
+- Use worker-first assessment for non-trivial visual QA. Look for independent screens, viewport groups, console/DOM inspection, screenshot comparison, component scopes, or regression review that can run in parallel.
+- Prefer subagents for independent screens, disjoint component scopes, parallel viewport review, diagnostic-only inspection, or screenshot/regression review.
+- Use main-only only when the visual issue is tiny, tightly coupled, unsafe to split, blocked on one immediate browser step, tooling is unavailable, or the user explicitly asks not to use workers.
+- When selecting main-only for non-trivial visual QA, report `No-Worker Justification`.
 - Tell workers they are not alone in the codebase and must not revert user or other-agent changes.
 - Main Codex must decide the final visual result, integrate changes, and run final browser or screenshot verification.
 

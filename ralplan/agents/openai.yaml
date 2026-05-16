@@ -1,4 +1,4 @@
 interface:
   display_name: "Ralplan"
   short_description: "Plan execution and macro goals"
-  default_prompt: "Use $ralplan to turn clarified requirements and analysis into an execution-ready plan, create one macro goal if explicitly requested, and include a goal contract plus worker visibility decision."
+  default_prompt: "Use $ralplan to create an execution-ready plan, create one macro goal if explicitly requested, run worker-first decomposition for non-trivial work, and prefer tmux-visible worker plans when safe splits exist."

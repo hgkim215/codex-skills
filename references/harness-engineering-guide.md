@@ -48,7 +48,16 @@ Every phase should separate:
 
 ## Worker Visibility
 
-Use tmux-visible workers only when work can be split into disjoint ownership boundaries and the main Codex is not immediately blocked on the worker result.
+Use worker-first assessment for non-trivial execution, QA, and visual QA. Before choosing main-only, actively look for useful worker splits across implementation, tests, docs, migration surfaces, reproduction hypotheses, verification, or review.
+
+Prefer tmux-visible workers when at least one of these is true:
+
+- two or more files, modules, screens, or responsibilities can be owned independently
+- implementation and tests/docs/verification can proceed in parallel
+- independent hypotheses or regression surfaces can be investigated without blocking the main path
+- the task is multi-step, continuation-prone, or likely to exceed a short focused edit
+
+Use main-only only when worker scopes would overlap unsafely, worker output is an immediate blocker for the next local step, tools are unavailable, the task is tiny and clearly one-shot, or the user asks not to use workers. When main-only is selected for non-trivial work, state the no-worker reason explicitly.
 
 When worker execution is selected:
 

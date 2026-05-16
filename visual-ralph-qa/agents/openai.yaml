@@ -1,4 +1,4 @@
 interface:
   display_name: "Visual Ralph QA"
   short_description: "Verify UI and visual goal impact"
-  default_prompt: "Use $visual-ralph-qa to inspect a UI in browser viewports, fix visual issues, and report screenshot-backed evidence plus goal impact."
+  default_prompt: "Use $visual-ralph-qa to inspect UI evidence, run worker-first assessment for non-trivial visual QA, prefer subagents for parallel viewports/screens, fix visual issues, and report screenshot-backed goal impact."

@@ -13,9 +13,11 @@ Use this contract when turning an approved plan or concrete request into changes
 
 - If a `ralplan` output exists, consume `Decision`, `Plan`, `Validation`, `Risks`, `Assumptions`, and `Handoff`.
 - If a `Goal Contract` exists, consume it as macro-objective context and check that the execution request is still aligned.
+- If a `Goal Scorecard` exists, consume it as the verification target for fast checks, full checks, and completion evidence.
 - Execute only when `Handoff` is `ralph-execute` or the user explicitly asks to implement the plan.
 - Keep edits inside the selected plan and accepted assumptions.
 - If new evidence invalidates the plan, stop and report the mismatch.
+- If goal tracking is requested but the objective, scope, done criteria, scorecard, or checks are unclear, stop before editing and ask the user for the missing goal information.
 
 ## Goal Checkpoint
 
@@ -27,15 +29,39 @@ Before editing, classify goal state when available:
 - `unknown`: goal tools or goal state are unavailable.
 - `missing`: goal tracking was requested, but no macro goal exists.
 - `mismatch`: current goal points to different work.
+- `unclear`: goal tracking was requested, but objective, scope, done criteria, scorecard, or checks are not auditable.
 - `paused`: goal exists but should not auto-continue.
 - `budget_limited`: budget has stopped continuation.
 
-Stop on `missing`, `mismatch`, `paused`, or `budget_limited` unless the user explicitly redirects. Execution should not create a phase-level goal. Only mark a goal complete after the full macro objective, validation, and review gates are satisfied.
+Stop on `missing`, `mismatch`, `unclear`, `paused`, or `budget_limited` unless the user explicitly redirects with the missing information or a different non-goal execution request. Execution should not create a phase-level goal. Only mark a goal complete after the full macro objective, scorecard, validation, and review gates are satisfied.
+
+## Progress Ledger
+
+When goal-aware execution is multi-step, worker-assisted, likely to continue across turns, or experiment-prone, maintain a ledger under:
+
+```text
+.ralph/goals/<goal-slug>/
+  PLAN.md
+  SCORECARD.md
+  EXPERIMENTS.md
+  NOTES.md
+```
+
+Use the ledger as durable working memory, not as permission to expand scope.
+
+- `PLAN.md`: selected plan, constraints, non-goals, and handoff boundaries.
+- `SCORECARD.md`: `Metric`, `Baseline`, `Target`, `Fast Check`, `Full Check`, `Regression Gates`, and `Stop Condition`.
+- `EXPERIMENTS.md`: append each meaningful attempt with hypothesis, change, check, result, and decision.
+- `NOTES.md`: short live notes, blockers, user decisions, and open questions.
+
+Do not create a ledger for trivial one-shot changes unless the plan requires it. If the ledger is required but the scorecard is not clear, stop and request clarification before editing.
 
 ## Subagent Policy
 
-- Default to main Codex execution for small or tightly coupled work.
-- Use subagents only when work can split into independent write scopes and parallelism improves speed, coverage, or quality.
+- Use worker-first assessment for every non-trivial execution. Before editing locally, actively try to split the work across implementation, tests, docs, migration surfaces, verification, or review.
+- Prefer subagents whenever work can split into independent write scopes, independent diagnostic scopes, or parallel verification responsibilities.
+- Use main-only only when the task is tiny and clearly one-shot, write scopes would overlap unsafely, worker output is an immediate blocker for the next local step, worker tooling is unavailable, or the user explicitly asks not to use workers.
+- When selecting main-only for non-trivial work, record `No-Worker Justification` in the final response.
 - When subagents are used, run them as tmux-visible CLI workers through `scripts/ralph_tmux_workers.sh`.
 - Pass `--goal-file` when a goal contract should be visible in the run directory and worker prompts.
 - Give each worker explicit ownership of files, modules, or responsibility.
@@ -43,10 +69,12 @@ Stop on `missing`, `mismatch`, `paused`, or `budget_limited` unless the user exp
 - Require each worker to return changed paths, verification performed, blockers, and residual risk.
 - Main Codex must review, integrate, and run final verification before reporting completion.
 - Worker run summaries should preserve status, started/finished timestamps, duration seconds, result size, and last-message state for completion audit evidence.
+- Worker-assisted runs must produce a user-facing `worker_handoff_summary.md` that shows each worker's scope, status, duration, result log, final handoff, blockers, and residual risk as reported by the worker.
+- Unless the user explicitly disables workspace artifacts, persist the handoff bundle under `.ralph/worker-runs/<run-name>-<timestamp>/` and update `.ralph/worker-runs/INDEX.md` so the user can audit past subagent work across turns.
 
 ## Tmux-Visible Worker Policy
 
-Use `ralph_tmux_workers.sh` when `ralplan` says `Worker Mode: tmux-visible` or when main Codex decides worker execution is useful.
+Use `ralph_tmux_workers.sh` when `ralplan` says `Worker Mode: tmux-visible`, when the user asks for worker/subagent splitting, or when main Codex identifies any useful separable scope during worker-first assessment.
 
 Create one prompt file per worker and a `workers.tsv` file:
 
@@ -64,14 +92,18 @@ Each prompt must include:
 - expected verification
 - required final response: changed paths, verification, blockers, residual risk
 
-Do not use tmux-visible workers when write scopes overlap, worker output must be consumed immediately by the next step, or the task is too coupled for safe parallel work.
+Do not use tmux-visible workers when write scopes overlap unsafely, worker output must be consumed immediately by the next step, the task is too coupled for safe parallel work, tooling is unavailable, or the user explicitly disables workers. If worker use is skipped for non-trivial work, state the skipped worker split and why it was rejected.
+
+After a tmux-visible run completes, inspect `worker_handoff_summary.md` first. Use `results/<worker>.last_message.md` for deeper worker-specific final handoffs and `results/<worker>.out` only for logs or diagnosis. Include both the transient `WORKER_HANDOFF_SUMMARY` and persistent `PERSISTENT_HANDOFF_SUMMARY` paths in the final worker-run report when they exist.
 
 ## Verification Loop
 
 - Prefer validation named by the plan.
+- For goal-aware work, run the `Fast Check` before broader validation whenever it is available and relevant.
 - Otherwise use documented repo commands from `AGENTS.md`, `README`, `Makefile`, `scripts`, manifests, or CI.
 - Run focused tests or checks for touched behavior when full verification is expensive.
 - If checks fail, inspect the failure, attempt a scoped fix, and rerun the same check.
+- Update `SCORECARD.md` or report the scorecard result after each meaningful fast/full check when a progress ledger is active.
 - If verification cannot run, report the blocker and residual risk.
 
 ## Stop And Approval Boundaries
