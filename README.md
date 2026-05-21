@@ -23,6 +23,15 @@ Codex에서 반복적으로 쓰는 작업 흐름을 스킬로 묶은 공개 저�
 
 ## Quick Install
 
+### Install all skills for Codex
+
+```bash
+npx skills@latest add hgkim215/codex-skills --skill '*' --agent codex --global --yes
+```
+
+이 명령은 현재 저장소의 설치 가능한 모든 스킬을 Codex용 global skill로 한 번에 설치합니다.
+`*`는 shell glob 확장을 피하려고 따옴표로 감싸야 합니다.
+
 ### Install one skill
 
 ```bash
@@ -37,6 +46,16 @@ npx skills@latest add hgkim215/codex-skills --skill ralph-execute --agent codex 
 ```bash
 npx skills@latest add hgkim215/codex-skills --list
 ```
+
+### Install all skills for all supported agents
+
+Codex뿐 아니라 감지 가능한 모든 agent에 설치하려면:
+
+```bash
+npx skills@latest add hgkim215/codex-skills --all --global
+```
+
+`--all`은 `--skill '*' --agent '*' --yes`의 축약입니다.
 
 ### Register as a Codex plugin marketplace source
 
