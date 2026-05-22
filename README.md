@@ -79,60 +79,60 @@ Ralph suite는 한 번에 모든 일을 시키기보다 작업 단계를 분리�
 $deep-interview -> $analyze -> $ralplan -> $ralph-execute -> $ralph-qa / $visual-ralph-qa -> $code-review
 ```
 
-큰 작업에서 worker를 나누는 경우 `ralph-execute`는 Codex CLI worker를 tmux 세션으로 띄울 수 있고, `tmux-worker-watch`는 그 진행 상황을 Codex App 대화로 요약합니다. worker를 쓰면 기본적으로 Ghostty가 열리고, 하나의 tmux session 안의 `workers` window에 subagent 수만큼 tiled pane이 만들어집니다. `monitor` window는 aggregate status를 보여주는 보조 창입니다. 각 worker run은 즉시 확인용 `worker_handoff_summary.md`를 만들고, 기본적으로 `.ralph/worker-runs/` 아래에 누적 handoff bundle과 `INDEX.md`를 남깁니다.
+큰 작업에서 worker를 나누는 경우 `ralph-execute`는 Codex CLI worker를 tmux 세션으로 띄울 수 있고, `tmux-worker-watch`는 그 진행 상황을 Codex App 대화로 요약합니다. worker를 쓰면 기본적으로 Ghostty가 열리고, 하나의 tmux session 안의 `workers` window에 subagent 수만큼 tiled pane이 만들어집니다. `monitor` window는 전체 상태를 보여주는 보조 창입니다. 각 worker run은 즉시 확인용 `worker_handoff_summary.md`를 만들고, 기본적으로 `.ralph/worker-runs/` 아래에 누적 handoff bundle과 `INDEX.md`를 남깁니다.
 
 Codex `goal` 기능은 선택 사항입니다. Ralph 스킬들은 goal을 per-skill checklist로 쓰지 않고 thread-level macro objective로만 다룹니다. 사용자가 `goal`, `native goal`, `Codex App goal`, 백그라운드 루프, 또는 완료될 때까지 계속 진행을 요청하면 native goal tool preflight를 먼저 시도합니다. native tool이 없으면 goal이 활성화됐다고 주장하지 않고, 명시적으로 Ralph ledger fallback 여부를 나눠서 보고합니다.
 
-## Optional Graph And Memory Integrations
+## 선택적 Graph/Memory 연동
 
-Ralph suite can use graph and memory tools when they are available, but they are not hard requirements. The default policy is:
+Ralph suite는 graph/memory 도구가 설치되어 있으면 활용할 수 있지만, 필수 의존성은 아닙니다. 기본 정책은 다음과 같습니다.
 
 ```text
-CodeGraph: selectively on by default for structural code context
-ActiveGraph: off by default; use only for long-running, complex, worker-heavy work
-Obsidian: off by default; use only for narrow long-term memory or prior decisions
+CodeGraph: 코드 구조/영향도 분석에는 선택적 기본 사용
+ActiveGraph: 기본 OFF, 장기/복잡/worker-heavy 작업에서만 사용
+Obsidian: 기본 OFF, 좁은 장기 기억이나 과거 결정 확인에만 사용
 ```
 
-These integrations should never block a small edit, a local test fix, or a direct answer. If a tool is unavailable, Ralph skills continue with repo files, docs, tests, command output, `.ralph` ledgers, and final handoff summaries.
+이 연동 도구들은 작은 수정, 로컬 테스트 수정, 직접 답변을 막으면 안 됩니다. 도구가 없으면 Ralph 스킬은 repo 파일, 문서, 테스트, 명령 출력, `.ralph` ledger, 최종 handoff summary만으로 계속 진행합니다.
 
 ### CodeGraph
 
-Use CodeGraph for structural code questions: symbol lookup, callers/callees, route or component ownership, architecture boundaries, and blast-radius checks. Skip it for literal text search, docs-only work, config edits, or already-localized fixes.
+CodeGraph는 구조적인 코드 질문에 사용합니다. 예를 들어 symbol 위치, caller/callee, route나 component 소유권, architecture boundary, 변경 영향도 확인에 적합합니다. 단순 텍스트 검색, 문서만 수정하는 작업, 설정값 수정, 이미 위치가 명확한 fix에는 사용하지 않는 편이 낫습니다.
 
-Install/enable guidance:
+설치/활성화 가이드:
 
-- Install or enable a CodeGraph MCP/CLI provider in your Codex environment.
-- Initialize CodeGraph per project when the repo has enough structural complexity to justify it.
-- If the `codegraph` CLI is available, initialize from the target repo with:
+- Codex 환경에 CodeGraph MCP/CLI provider를 설치하거나 활성화합니다.
+- repo가 충분히 크거나 구조 분석 가치가 있을 때 프로젝트별로 CodeGraph를 초기화합니다.
+- `codegraph` CLI가 있다면 대상 repo에서 다음 명령으로 초기화합니다.
 
 ```bash
 codegraph init -i
 ```
 
-- Add project-level guidance such as `AGENTS.md` so agents know when to prefer CodeGraph over raw search.
-- If CodeGraph is missing or not initialized, Ralph skills should ask about initialization only for non-trivial structural work.
+- `AGENTS.md` 같은 프로젝트 지침에 CodeGraph를 언제 우선 사용할지 적어두면 좋습니다.
+- CodeGraph가 없거나 초기화되지 않은 경우, Ralph 스킬은 구조 분석 가치가 있는 non-trivial 작업에서만 초기화 여부를 물어봐야 합니다.
 
 ### ActiveGraph
 
-ActiveGraph is treated as an optional state graph, not a required runtime. Use it only if an actual ActiveGraph MCP/tool is installed and the task needs machine-readable relationships across goal, plan, workers, files, symbols, commands, evidence, findings, and decisions.
+ActiveGraph는 필수 runtime이 아니라 선택적 상태 그래프로 취급합니다. 실제 ActiveGraph MCP/tool이 설치되어 있고, goal, plan, worker, file, symbol, command, evidence, finding, decision 사이의 관계를 기계가 읽기 좋게 유지해야 할 때만 사용합니다.
 
-Install/enable guidance:
+설치/활성화 가이드:
 
-- Install or enable the ActiveGraph MCP/tool in the Codex environment if your setup provides one.
-- Confirm the tool is callable before relying on it.
-- Do not duplicate full markdown plans or logs into ActiveGraph. Store compact references and relationships.
-- If ActiveGraph is unavailable, use native goal tools, `.ralph/goals/<goal-slug>/`, `.ralph/worker-runs/`, and final summaries instead.
+- 사용 중인 환경에서 ActiveGraph MCP/tool을 제공한다면 Codex에 설치하거나 활성화합니다.
+- 의존하기 전에 실제로 callable tool로 노출되는지 확인합니다.
+- 전체 markdown plan이나 log를 ActiveGraph에 복붙하지 않습니다. 짧은 reference와 관계만 저장합니다.
+- ActiveGraph가 없으면 native goal tool, `.ralph/goals/<goal-slug>/`, `.ralph/worker-runs/`, 최종 summary를 대신 사용합니다.
 
 ### Obsidian
 
-Obsidian is for human long-term memory: prior decisions, user preferences, non-goals, project philosophy, and historical notes. It should not be used as a broad search engine during normal execution loops.
+Obsidian은 사람을 위한 장기 기억에 가깝습니다. 과거 결정, 사용자 선호, non-goal, 프로젝트 철학, 히스토리 노트를 확인할 때만 좁게 사용합니다. 일반 실행 루프에서 넓은 vault 검색 엔진처럼 쓰면 속도와 정확도 모두 손해일 수 있습니다.
 
-Install/enable guidance:
+설치/활성화 가이드:
 
-- Install Obsidian and configure a vault.
-- Enable an Obsidian MCP connector or local REST/API bridge that exposes read/search/patch tools to Codex.
-- Prefer explicit project notes, index files, tags, or frontmatter over vault-wide search.
-- If Obsidian lookup is slow, noisy, or unavailable, skip it and continue with repo evidence.
+- Obsidian을 설치하고 vault를 구성합니다.
+- Codex에서 읽기/search/patch 도구를 사용할 수 있도록 Obsidian MCP connector나 local REST/API bridge를 활성화합니다.
+- vault-wide search보다 명시적인 프로젝트 note, index 파일, tag, frontmatter 기반 접근을 우선합니다.
+- Obsidian 조회가 느리거나 노이즈가 많거나 사용할 수 없으면 건너뛰고 repo evidence로 계속 진행합니다.
 
 ## Requirements
 
@@ -147,13 +147,13 @@ tmux worker 기능:
 
 - `tmux`
 - Codex CLI
-- Ghostty preferred for visible worker panes. If Ghostty is unavailable, macOS Terminal or a manual `tmux attach` command is used as fallback.
+- visible worker pane을 보려면 Ghostty를 권장합니다. Ghostty가 없으면 macOS Terminal 또는 수동 `tmux attach` 명령을 fallback으로 사용합니다.
 
 선택적 graph/memory 기능:
 
-- CodeGraph MCP/CLI for structural code context
-- ActiveGraph MCP/tool for durable state relationships in complex worker-heavy tasks
-- Obsidian MCP/API connector for narrow long-term memory lookup
+- 코드 구조 맥락을 위한 CodeGraph MCP/CLI
+- 복잡하고 worker-heavy한 작업의 상태 관계를 남기기 위한 ActiveGraph MCP/tool
+- 좁은 장기 기억 조회를 위한 Obsidian MCP/API connector
 
 `cross-verify`:
 
@@ -170,11 +170,11 @@ tmux worker 기능:
 
 ### v0.3.0 - 2026-05-22
 
-- Graph context policy 추가: CodeGraph는 구조/영향도 중심으로 선택적 기본 사용, ActiveGraph는 장기/복잡/worker-heavy 작업에서만 사용, Obsidian은 좁은 장기기억 조회에만 사용하도록 정리했습니다.
-- Orchestration policy 추가: subagent는 coordination cost를 이길 때만 사용하고, main agent가 최종 통합/검증/완료 판단을 소유하도록 명시했습니다.
-- Ghostty/tmux visibility 강화: subagent 사용 시 Ghostty-attached tmux session, `workers` window, subagent별 tiled pane, optional `monitor` window를 기본 기대 동작으로 문서화했습니다.
+- Graph context policy 추가: CodeGraph는 구조/영향도 중심으로 선택적 기본 사용, ActiveGraph는 장기/복잡/worker-heavy 작업에서만 사용, Obsidian은 좁은 장기 기억 조회에만 사용하도록 정리했습니다.
+- Orchestration policy 추가: subagent는 조율 비용보다 이득이 클 때만 사용하고, main agent가 최종 통합/검증/완료 판단을 소유하도록 명시했습니다.
+- Ghostty/tmux visibility 강화: subagent 사용 시 Ghostty-attached tmux session, `workers` window, subagent별 tiled pane, 선택적 `monitor` window를 기본 기대 동작으로 문서화했습니다.
 - `ralph_tmux_workers.sh` 출력에 `TMUX_WORKERS_WINDOW`와 `WORKER_PANE_COUNT`를 추가해 worker run 가시성 검증이 쉬워졌습니다.
-- CodeGraph, ActiveGraph, Obsidian 설치/활성화 가이드를 README에 추가했습니다. 세 도구는 optional integration이며 미설치 시 Ralph 흐름을 막지 않습니다.
+- CodeGraph, ActiveGraph, Obsidian 설치/활성화 가이드를 README에 추가했습니다. 세 도구는 선택적 연동이며 미설치 시 Ralph 흐름을 막지 않습니다.
 - 검증 로그 추가: graph/orchestration policy와 Ghostty/tmux worker pane smoke test 결과를 `docs/test-results/`에 기록했습니다.
 
 ### v0.2.0 - 2026-05-16
