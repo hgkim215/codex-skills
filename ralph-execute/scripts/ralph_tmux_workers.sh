@@ -27,7 +27,7 @@ Options:
   --handoff-root DIR   Persistent worker handoff root. Default: WORKDIR/.ralph/worker-runs.
   --persist-handoff    Persist worker handoff docs into the workspace. Default.
   --no-persist-handoff Keep handoff docs only in RUN_DIR.
-  --open-terminal     Open Ghostty or Terminal attached to the tmux session. Default.
+  --open-terminal     Open Ghostty attached to the tmux session, falling back to Terminal if unavailable. Default.
   --no-open-terminal  Do not open a terminal app.
   --wait              Wait for all worker status files and write final summary.
   --no-wait           Return after launching workers. Default.
@@ -37,7 +37,7 @@ Environment:
   RALPH_WORKER_TIMEOUT_SECONDS  Per-worker timeout. Default: 900.
   RALPH_WORKER_SANDBOX          Codex sandbox. Default: workspace-write.
   RALPH_WORKER_MODEL            Optional Codex model override.
-  RALPH_WORKER_TERMINAL_APP     auto, ghostty, or terminal. Default: auto.
+  RALPH_WORKER_TERMINAL_APP     auto, ghostty, or terminal. Default: auto; auto prefers Ghostty.
   RALPH_WORKER_TMUX_SOCKET      Optional tmux socket name for isolated tests.
   RALPH_WORKER_TEST_COMMAND     Test-only shell command run instead of codex exec.
   RALPH_WORKER_HANDOFF_ROOT     Persistent handoff root when --handoff-root is omitted.
@@ -708,6 +708,8 @@ fi
 
 echo "TMUX_SESSION=$session_name"
 echo "RUN_DIR=$run_dir"
+echo "TMUX_WORKERS_WINDOW=workers"
+echo "WORKER_PANE_COUNT=$worker_count"
 if [[ -f "$run_dir/goal.md" ]]; then
   echo "GOAL_FILE=$run_dir/goal.md"
 fi

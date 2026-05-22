@@ -9,6 +9,15 @@ Use this contract when turning an approved plan or concrete request into changes
 - Inspect `git status --short` before editing.
 - Preserve user changes and generated work that you did not create.
 
+## Graph Context
+
+Follow the suite-level `../../references/graph-context-policy.md`.
+
+- Use CodeGraph before editing when symbol ownership, callers/callees, route/component discovery, shared API impact, or architecture boundaries matter.
+- Skip CodeGraph when the change is tiny, already localized, docs/config-only, or faster to handle with direct reads and `rg`.
+- Use ActiveGraph only when available and the work is long-running, worker-heavy, experiment-prone, or completion-audit heavy. Do not duplicate `.ralph` ledger text into ActiveGraph.
+- Use Obsidian only for narrow prior decisions or user preferences that materially affect implementation. Skip broad or slow memory lookup.
+
 ## Plan Consumption
 
 - If a `ralplan` output exists, consume `Decision`, `Plan`, `Validation`, `Risks`, `Assumptions`, and `Handoff`.
@@ -58,11 +67,13 @@ Do not create a ledger for trivial one-shot changes unless the plan requires it.
 
 ## Subagent Policy
 
+Follow the suite-level `../../references/orchestration-policy.md`.
+
 - Use worker-first assessment for every non-trivial execution. Before editing locally, actively try to split the work across implementation, tests, docs, migration surfaces, verification, or review.
-- Prefer subagents whenever work can split into independent write scopes, independent diagnostic scopes, or parallel verification responsibilities.
-- Use main-only only when the task is tiny and clearly one-shot, write scopes would overlap unsafely, worker output is an immediate blocker for the next local step, worker tooling is unavailable, or the user explicitly asks not to use workers.
+- Prefer subagents when work can split into independent write scopes, independent diagnostic scopes, or parallel verification responsibilities and the expected value beats coordination cost.
+- Use main-only when the task is tiny and clearly one-shot, tightly coupled, write scopes would overlap unsafely, worker output is an immediate blocker for the next local step, the work is mostly product judgment, worker tooling is unavailable, or the user explicitly asks not to use workers.
 - When selecting main-only for non-trivial work, record `No-Worker Justification` in the final response.
-- When subagents are used, run them as tmux-visible CLI workers through `scripts/ralph_tmux_workers.sh`.
+- When subagents are used, run them as tmux-visible CLI workers through `scripts/ralph_tmux_workers.sh`, opening Ghostty with one `workers` tmux window and one tiled pane per subagent unless the user explicitly disables terminal opening.
 - Pass `--goal-file` when a goal contract should be visible in the run directory and worker prompts.
 - Give each worker explicit ownership of files, modules, or responsibility.
 - Tell workers they are not alone in the codebase and must not revert user or other-agent changes.
@@ -74,7 +85,15 @@ Do not create a ledger for trivial one-shot changes unless the plan requires it.
 
 ## Tmux-Visible Worker Policy
 
-Use `ralph_tmux_workers.sh` when `ralplan` says `Worker Mode: tmux-visible`, when the user asks for worker/subagent splitting, or when main Codex identifies any useful separable scope during worker-first assessment.
+Use `ralph_tmux_workers.sh` when `ralplan` says `Worker Mode: tmux-visible`, when the user asks for worker/subagent splitting, or when main Codex identifies separable scopes that pass the orchestration decision gate during worker-first assessment.
+
+The expected visibility surface is:
+
+- one Ghostty window attached to the worker tmux session
+- one `workers` tmux window containing exactly one pane per subagent
+- tiled pane layout with pane titles matching worker roles
+- one optional `monitor` tmux window for aggregate status
+- Terminal fallback only when Ghostty cannot be opened
 
 Create one prompt file per worker and a `workers.tsv` file:
 
@@ -94,7 +113,7 @@ Each prompt must include:
 
 Do not use tmux-visible workers when write scopes overlap unsafely, worker output must be consumed immediately by the next step, the task is too coupled for safe parallel work, tooling is unavailable, or the user explicitly disables workers. If worker use is skipped for non-trivial work, state the skipped worker split and why it was rejected.
 
-After a tmux-visible run completes, inspect `worker_handoff_summary.md` first. Use `results/<worker>.last_message.md` for deeper worker-specific final handoffs and `results/<worker>.out` only for logs or diagnosis. Include both the transient `WORKER_HANDOFF_SUMMARY` and persistent `PERSISTENT_HANDOFF_SUMMARY` paths in the final worker-run report when they exist.
+After a tmux-visible run completes, inspect `worker_handoff_summary.md` first. Use `results/<worker>.last_message.md` for deeper worker-specific final handoffs and `results/<worker>.out` only for logs or diagnosis. Include the terminal app, tmux session, worker window, worker pane count, transient `WORKER_HANDOFF_SUMMARY`, and persistent `PERSISTENT_HANDOFF_SUMMARY` paths in the final worker-run report when they exist.
 
 ## Verification Loop
 

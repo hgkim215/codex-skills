@@ -9,6 +9,15 @@ Use this contract when reviewing a completed diff, PR candidate, changed files, 
 - Inspect local git state before reviewing an unspecified target.
 - Preserve user changes. Do not edit files inside this skill.
 
+## Graph Context
+
+Follow the suite-level `../../references/graph-context-policy.md`.
+
+- Use CodeGraph when changed symbols, shared APIs, routes, components, or architecture boundaries need caller/callee or impact checks.
+- Skip CodeGraph for tiny diffs, docs-only changes, or issues already proven by the diff and tests.
+- Use ActiveGraph only when plan/evidence/finding relationships are available and materially affect completion review.
+- Use Obsidian only for narrow prior decisions; current repo evidence wins when they conflict.
+
 ## Findings First
 
 - Lead with findings, not a summary.

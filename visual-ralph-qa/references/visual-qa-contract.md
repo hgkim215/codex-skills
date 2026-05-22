@@ -9,6 +9,15 @@ Use this contract when a browser-rendered UI, screenshot, viewport, or visual st
 - Inspect `git status --short` before editing.
 - Preserve user changes and generated work that you did not create.
 
+## Graph Context
+
+Follow the suite-level `../../references/graph-context-policy.md`.
+
+- Use CodeGraph for route/component discovery, shared UI primitive impact, and design-system boundary checks.
+- Skip CodeGraph for tiny localized style changes where the target file is already clear.
+- Use ActiveGraph only for long-running or worker-heavy visual QA state when available.
+- Use Obsidian only for narrow prior design decisions or user visual preferences.
+
 ## Browser Surface Selection
 
 - Prefer Codex Browser for localhost, current in-app browser tabs, file URLs, and interactive inspection.
@@ -65,9 +74,11 @@ If goal tracking was requested but no active goal exists, report that the macro 
 
 ## Subagent Policy
 
+Follow the suite-level `../../references/orchestration-policy.md`.
+
 - Use worker-first assessment for non-trivial visual QA. Look for independent screens, viewport groups, console/DOM inspection, screenshot comparison, component scopes, or regression review that can run in parallel.
-- Prefer subagents for independent screens, disjoint component scopes, parallel viewport review, diagnostic-only inspection, or screenshot/regression review.
-- Use main-only only when the visual issue is tiny, tightly coupled, unsafe to split, blocked on one immediate browser step, tooling is unavailable, or the user explicitly asks not to use workers.
+- Prefer subagents for independent screens, disjoint component scopes, parallel viewport review, diagnostic-only inspection, or screenshot/regression review when the expected value beats coordination cost.
+- Use main-only when the visual issue is tiny, tightly coupled, unsafe to split, blocked on one immediate browser step, mainly subjective, tooling is unavailable, or the user explicitly asks not to use workers.
 - When selecting main-only for non-trivial visual QA, report `No-Worker Justification`.
 - Tell workers they are not alone in the codebase and must not revert user or other-agent changes.
 - Main Codex must decide the final visual result, integrate changes, and run final browser or screenshot verification.

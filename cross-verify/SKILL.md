@@ -10,17 +10,27 @@ metadata:
 
 Use this skill when the user wants an independent multi-agent check before the main Codex gives the final answer. The reviewers are advisory only; the main Codex decides the final recommendation.
 
+## Graph Context
+
+Read `../references/graph-context-policy.md` before preparing the verification prompt when structural code context, prior decisions, or multi-skill state materially affect the question.
+
+- Include concise CodeGraph findings in the prompt for structural code reviews, impact analysis, or architecture decisions.
+- Include ActiveGraph state only if available and relevant to goal/plan/evidence relationships.
+- Include Obsidian notes only when a narrow prior-decision or user-preference lookup affects the judgment.
+- Do not make reviewers depend on access to unavailable graph tools; pass bounded summaries and explicit file contents instead.
+
 ## Core Workflow
 
 1. Prepare a focused verification prompt.
    - Restate the user's question or decision to verify.
    - Include success criteria, constraints, and any known uncertainty.
    - For code work, include the current goal plus relevant file paths, error logs, and a concise summary of local findings.
+   - Include concise graph-context summaries only when they were cheap and materially relevant.
    - The helper script automatically adds `git status`, `git diff --stat`, and a bounded `git diff` when run inside a git repository.
 2. Run the tmux helper:
 
 ```bash
-export CROSS_VERIFY="$HOME/.codex/skills/cross-verify/scripts/cross_verify_tmux.sh"
+export CROSS_VERIFY="${CROSS_VERIFY:-$HOME/.agents/skills/cross-verify/scripts/cross_verify_tmux.sh}"
 "$CROSS_VERIFY" --workdir "$PWD" --prompt-file /path/to/verification-prompt.md
 ```
 

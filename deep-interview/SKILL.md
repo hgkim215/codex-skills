@@ -25,6 +25,15 @@ Apply the guide as operating rules, not as text to quote:
 - Ask the user only for judgment: goal, priority, scope, non-goals, constraints, approval boundaries, and done criteria.
 - Produce a compact requirements artifact that can be handed to `analyze`, `ralplan`, or `ralph-execute`.
 
+## Graph Context
+
+Read `../references/graph-context-policy.md` when existing project context or long-term memory could change the interview.
+
+- Use CodeGraph only for brownfield context or impact questions that would otherwise cause guessing; do not use it for greenfield preference discovery.
+- Use ActiveGraph only if available and the clarified request is likely to become a multi-turn or worker-heavy goal.
+- Use Obsidian only for narrow prior-decision, user preference, or project-history lookup. Skip it if lookup is broad, slow, or noisy.
+- Keep graph facts separate from user judgment in `Known Project Context`.
+
 ## Goal Awareness
 
 Use Codex `goal` as a macro objective layer, not as a replacement for this interview.
@@ -90,6 +99,8 @@ For brownfield or project-scoped work, inspect likely sources before asking the 
 Use fast targeted search such as `rg` before broader reads.
 
 Record discovered facts as `Known Project Context`. Keep facts separate from interpretation.
+
+Apply graph context only when it reduces ambiguity: CodeGraph for existing code structure, Obsidian for known decision history, and ActiveGraph only for durable multi-skill state when available. Do not delay the interview for optional memory lookup.
 
 ### 3. Choose The Highest-Leverage Uncertainty
 

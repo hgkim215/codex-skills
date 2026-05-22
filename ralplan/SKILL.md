@@ -14,6 +14,7 @@ Use this skill between `deep-interview` / `analyze` and `ralph-execute`. It shou
 ## Harness Contract
 
 Read `references/harness-contract.md` when using this skill.
+Read `../references/graph-context-policy.md` and `../references/orchestration-policy.md` when graph context or worker planning might affect the plan.
 
 Apply that contract as operating rules:
 
@@ -21,6 +22,8 @@ Apply that contract as operating rules:
 - Treat plans as reusable artifacts for the next agent, not one-off commentary.
 - Include validation and recovery expectations in the plan.
 - Keep implementation out of this skill.
+- Use CodeGraph selectively for structural planning and blast-radius checks; keep ActiveGraph and Obsidian off unless their specific decision value is clear.
+- Plan tmux-visible workers only when the orchestration decision gate passes, not simply because the task is larger than a one-liner.
 
 ## Goal Awareness
 
@@ -104,6 +107,12 @@ Use `rg` or `rg --files` first. Read only what is needed to plan safely.
 
 Do not perform implementation, formatting, migrations, codegen, commits, or patches. Do not run code generators.
 
+Apply Graph Context Preflight from `../references/graph-context-policy.md`:
+
+- CodeGraph: prefer for architecture, symbol impact, route/component discovery, and shared API changes.
+- ActiveGraph: use only if available and the plan needs machine-readable state across workers or later skill handoffs.
+- Obsidian: use only for narrow prior decisions or user preference memory, and skip slow broad lookup.
+
 ### 3. Planner Draft
 
 Draft the plan with:
@@ -153,12 +162,13 @@ Decide whether execution should be main-only or worker-assisted.
 
 Run a worker-first decomposition for non-trivial work. Actively look for separable ownership across implementation, tests, docs, migration surfaces, reproduction hypotheses, visual viewports, regression checks, or review.
 
-Prefer `Worker Mode: tmux-visible` when any useful split exists, especially when:
+Prefer `Worker Mode: tmux-visible` only when the orchestration decision gate passes, especially when:
 
 - the work can split into independent responsibilities
 - each worker has a disjoint write scope
 - parallel execution improves speed, coverage, or quality
 - main Codex can integrate the outputs and run final verification
+- coordination overhead is lower than the expected value
 
 For each worker, include:
 
@@ -170,7 +180,9 @@ For each worker, include:
 - `validation`: what the worker should run or report
 - `dependency`: `none` unless the worker depends on another worker
 
-Use `Worker Mode: main-only` only for tiny one-shot work, unsafe overlapping write scopes, immediate blocker dependencies, unavailable worker tooling, or explicit user instruction not to use workers. For non-trivial main-only plans, include `No-Worker Justification` with the concrete reason.
+When selecting `Worker Mode: tmux-visible`, state the visibility expectation: Ghostty opens attached to one tmux session, the `workers` window contains one tiled pane per subagent, and the optional `monitor` window shows aggregate status.
+
+Use `Worker Mode: main-only` for tiny one-shot work, tightly coupled changes, unsafe overlapping write scopes, immediate blocker dependencies, unavailable worker tooling, product-judgment-heavy work, or explicit user instruction not to use workers. For non-trivial main-only plans, include `No-Worker Justification` with the concrete split considered and why it was rejected.
 
 ### 7. Finalize Handoff
 
@@ -214,7 +226,7 @@ Use this exact shape:
 ## Handoff
 ```
 
-The `Goal Contract` section must include `Goal Usage`, `Objective Source`, `Current Status`, `Pause Boundaries`, `Completion Gate`, and `Completion Audit Plan`. The `Goal Scorecard` section must include `Metric`, `Baseline`, `Target`, `Fast Check`, `Full Check`, `Regression Gates`, and `Stop Condition` whenever goal usage is `observe`, `suggest`, or `active`; if the required fields are missing, stop and request them instead of emitting a plan. The `Progress Ledger` section should either name `.ralph/goals/<goal-slug>/` with expected `PLAN.md`, `SCORECARD.md`, `EXPERIMENTS.md`, and `NOTES.md`, or say `not needed` for short one-shot work. The `Plan` section should be concrete enough for another agent to implement without inventing strategy. The `Worker Visibility Plan` section must say either `Worker Mode: main-only` or `Worker Mode: tmux-visible`; prefer tmux-visible for non-trivial work when separable scopes exist, include worker details when tmux-visible execution is intended, and include `No-Worker Justification` when selecting main-only for non-trivial work. The `Validation` section must name the expected checks or explain why checks are not yet discoverable.
+The `Goal Contract` section must include `Goal Usage`, `Objective Source`, `Current Status`, `Pause Boundaries`, `Completion Gate`, and `Completion Audit Plan`. The `Goal Scorecard` section must include `Metric`, `Baseline`, `Target`, `Fast Check`, `Full Check`, `Regression Gates`, and `Stop Condition` whenever goal usage is `observe`, `suggest`, or `active`; if the required fields are missing, stop and request them instead of emitting a plan. The `Progress Ledger` section should either name `.ralph/goals/<goal-slug>/` with expected `PLAN.md`, `SCORECARD.md`, `EXPERIMENTS.md`, and `NOTES.md`, or say `not needed` for short one-shot work. The `Plan` section should be concrete enough for another agent to implement without inventing strategy. The `Worker Visibility Plan` section must say either `Worker Mode: main-only` or `Worker Mode: tmux-visible`; prefer tmux-visible only when separable scopes pass the orchestration decision gate, include worker details when tmux-visible execution is intended, and include `No-Worker Justification` when selecting main-only for non-trivial work. The `Validation` section must name the expected checks or explain why checks are not yet discoverable.
 
 ## Stop Rules
 

@@ -24,7 +24,7 @@ tmux-visible worker execution additionally needs:
 
 - `tmux`
 - Codex CLI
-- optional Ghostty
+- Ghostty preferred for the visible worker window; Terminal fallback is used only if Ghostty is unavailable
 
 ## Example
 
@@ -34,6 +34,7 @@ $ralph-execute 위 계획을 구현하고 검증까지 진행해줘.
 
 For worker runs, the launcher writes:
 
+- A Ghostty-attached tmux session with a `workers` window containing one tiled pane per subagent
 - `RUN_DIR/worker_handoff_summary.md`: immediate user-facing summary of every worker
 - `.ralph/worker-runs/<run-id>/worker_handoff_summary.md`: persistent copy inside the workspace
 - `.ralph/worker-runs/INDEX.md`: cumulative index of worker-assisted runs

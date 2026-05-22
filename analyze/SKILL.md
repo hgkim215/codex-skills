@@ -25,6 +25,15 @@ Apply the guide as operating rules:
 - Keep analysis read-only unless the user explicitly switches to an execution skill.
 - Convert repeated structural problems into `Harness Rule Candidates`.
 
+## Graph Context
+
+Read `../references/graph-context-policy.md` when graph or memory tools might help.
+
+- Use CodeGraph for code structure, impact, dependency flow, callers/callees, and unfamiliar architecture.
+- Skip CodeGraph for literal text searches, small docs/config checks, or cases where target files are already obvious.
+- Use ActiveGraph only if available and the analysis is part of a multi-turn, worker-heavy, goal-aware investigation.
+- Use Obsidian only for narrow prior-decision or long-term memory lookup; do not run broad vault searches in the normal analysis path.
+
 ## Goal Awareness
 
 Use Codex `goal` only as a thread-level objective and progress context.
@@ -97,7 +106,17 @@ Search likely sources in this order when present:
 
 Use `rg` or `rg --files` first. Read only the files needed to support the analysis.
 
-### 3. Separate Evidence From Interpretation
+### 3. Apply Graph Context Triage
+
+For non-trivial code, architecture, failure, or workflow analysis, decide whether graph context is worth the cost:
+
+- CodeGraph: use when it can answer structure or impact faster than file-by-file reading.
+- ActiveGraph: use only for stateful multi-skill analysis when available; otherwise rely on `.ralph` ledgers or the final artifact.
+- Obsidian: use only for explicit project memory or historical decision context, and skip it if lookup is slow or noisy.
+
+Do not let graph lookup delay a direct answer when repo evidence is already sufficient.
+
+### 4. Separate Evidence From Interpretation
 
 Use these labels mentally while analyzing:
 
@@ -108,7 +127,7 @@ Use these labels mentally while analyzing:
 
 Never present inference as fact. Call out confidence when the evidence is partial.
 
-### 4. Avoid Mutations
+### 5. Avoid Mutations
 
 Do not:
 
@@ -120,7 +139,7 @@ Do not:
 
 Allowed actions are read-only exploration and checks that only gather evidence. If a command might mutate repo-tracked files, do not run it in this skill.
 
-### 5. Synthesize Findings
+### 6. Synthesize Findings
 
 Rank findings by importance.
 
@@ -134,7 +153,7 @@ Each finding should include:
 
 Prefer a small number of high-signal findings over broad summaries.
 
-### 6. Capture Harness Rule Candidates
+### 7. Capture Harness Rule Candidates
 
 If the analysis finds a repeated, preventable problem, list it as a candidate for a future harness rule.
 

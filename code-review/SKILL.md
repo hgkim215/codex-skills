@@ -14,6 +14,7 @@ Use this skill after `ralph-execute`, `ralph-qa`, or `visual-ralph-qa` when the 
 ## Review Contract
 
 Read `references/review-contract.md` when using this skill.
+Read `../references/graph-context-policy.md` when structural impact or prior evidence could change review findings.
 
 Apply that contract as operating rules:
 
@@ -23,6 +24,7 @@ Apply that contract as operating rules:
 - Prioritize bugs, regressions, architecture drift, security/privacy risk, and missing tests.
 - Do not edit files inside this skill.
 - Record repeated or preventable issues as `Harness Rule Candidates`.
+- Use CodeGraph selectively for changed symbols, callers, impact radius, and architecture boundaries; skip it for tiny or already-localized diffs.
 
 ## Goal Awareness
 
@@ -114,6 +116,12 @@ Inspect:
 - source paths adjacent to changed files
 
 Use `rg` or `rg --files` first when locating context. Do not run mutating commands.
+
+Apply Graph Context Preflight when the diff touches shared code, exported APIs, routes, components, or architecture boundaries:
+
+- CodeGraph: changed symbol callers/callees and likely blast radius.
+- ActiveGraph: plan/evidence/finding relationships when available for multi-skill or worker-heavy work.
+- Obsidian: prior decisions only when review depends on historical intent; skip slow lookup.
 
 ### 3. Review For High-Impact Risk
 

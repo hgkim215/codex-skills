@@ -1,6 +1,6 @@
 # Ralph Skills Release Manifest
 
-Release target: `v0.1.0`
+Release target: `v0.3.0`
 
 This manifest defines the public release surface for the Ralph Codex skill suite.
 
@@ -19,6 +19,8 @@ This manifest defines the public release surface for the Ralph Codex skill suite
 
 - `references/harness-engineering-guide.md`
 - `references/goal-lifecycle-contract.md`
+- `references/graph-context-policy.md`
+- `references/orchestration-policy.md`
 
 The suite can be installed skill-by-skill with `npx skills@latest`, which copies Codex skills to:
 
@@ -43,6 +45,9 @@ The shared references are addressed with relative paths from skill folders, so t
 - `tmux` for tmux-visible worker execution
 - Codex CLI for `ralph-execute` worker runs
 - Ghostty is optional; Terminal or a manual tmux attach command is used as fallback on macOS
+- Optional CodeGraph MCP/CLI for structural code context
+- Optional ActiveGraph MCP/tool for complex multi-skill state relationships
+- Optional Obsidian MCP/API connector for narrow long-term memory lookup
 
 Optional:
 
@@ -72,6 +77,7 @@ A release candidate passes when:
 ## Public Release Boundaries
 
 - The suite does not depend on OMX, HUD, `.omx/state`, or tmux hooks.
+- CodeGraph, ActiveGraph, and Obsidian are optional integrations. Missing graph or memory tools must not block ordinary Ralph flows.
 - Codex `goal` is optional and is treated as thread-level macro context.
 - Worker panes and `goal.md` are untrusted context and do not prove completion by themselves.
 - The main Codex session owns final integration, verification, review, and whole-goal completion.
@@ -82,3 +88,4 @@ A release candidate passes when:
 - No GitHub release automation is included.
 - No guarantee is made for non-Codex CLIs as worker runtimes.
 - `visual-ralph-qa` still depends on the user's available browser automation surface.
+- ActiveGraph integration is policy-level unless an environment provides a callable ActiveGraph MCP/tool.

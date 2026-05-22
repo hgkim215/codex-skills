@@ -14,6 +14,7 @@ Use this skill when the failure itself is the center of the work. Use `ralph-exe
 ## QA Contract
 
 Read `references/qa-contract.md` when using this skill.
+Read `../references/graph-context-policy.md` and `../references/orchestration-policy.md` when graph context or worker splitting might affect diagnosis.
 
 Apply that contract as operating rules:
 
@@ -22,7 +23,7 @@ Apply that contract as operating rules:
 - Keep fixes tied to the reproduced cause.
 - Rerun the same failing command after the fix.
 - Run focused regression checks when the touched area makes regression plausible.
-- Use worker-first assessment for non-trivial failures and prefer subagents when independent hypotheses, write scopes, diagnostics, or regression checks can run in parallel.
+- Use worker-first assessment for non-trivial failures and prefer subagents only when independent hypotheses, write scopes, diagnostics, or regression checks justify the coordination cost.
 
 ## Goal Awareness
 
@@ -137,19 +138,22 @@ Separate:
 
 Prefer a narrow cause tied to the observed failure over broad architecture commentary.
 
+Use CodeGraph after reproduction when structural context can narrow the cause, such as tracing callers, shared helpers, routes, components, or affected APIs. Skip CodeGraph when the error already points to a local line, fixture, config value, or obvious test expectation. Use ActiveGraph only for long-running or worker-heavy QA state when available; use Obsidian only for narrow historical expected-behavior context.
+
 ### 5. Worker-First QA Decision
 
 Before diagnosing non-trivial failures alone, actively search for useful subagent splits across independent hypotheses, disjoint modules, diagnostic-only investigation, reproduction paths, or regression coverage.
 
-Prefer subagents when any of these are true:
+Prefer subagents when most of these are true:
 
 - failure hypotheses split into independent investigation paths
 - each worker can own a disjoint file, module, or diagnostic scope
 - parallel work improves diagnosis speed or regression coverage
 - the main Codex can still run the final same-command verification
 - subagent use is available and the user has not disabled workers
+- coordination overhead is lower than diagnosing locally
 
-Use main-only only when the failure is tiny, tightly coupled, unsafe to split, blocked on one immediate reproduction path, tooling is unavailable, or the user explicitly asks not to use workers. For non-trivial main-only QA, report `No-Worker Justification`.
+Use main-only when the failure is tiny, tightly coupled, unsafe to split, blocked on one immediate reproduction path, already localized by the stack trace, tooling is unavailable, or the user explicitly asks not to use workers. For non-trivial main-only QA, report `No-Worker Justification`.
 
 When using subagents:
 

@@ -9,6 +9,15 @@ Use this contract when turning project context into a plan.
 - Prefer accessible repo knowledge over user memory.
 - Separate confirmed facts from inference and assumptions.
 
+## Graph Context
+
+Follow the suite-level `../../references/graph-context-policy.md`.
+
+- Use CodeGraph for structural planning, dependency direction, impacted callers, route/component ownership, and shared API blast radius.
+- Skip CodeGraph for small one-shot edits, docs/config-only changes, and plans where the target file and validation are already obvious.
+- Use ActiveGraph only when a plan will need durable machine-readable state across workers, attempts, evidence, and completion review.
+- Use Obsidian only for narrow prior decisions or user/project preferences that could change the plan. Broad or slow lookup should be skipped.
+
 ## Plan as Artifact
 
 - Make plans reusable by another agent.
@@ -70,11 +79,15 @@ When a planning issue is likely to repeat, record it as a future harness rule ca
 
 ## Worker Visibility Planning
 
+Follow the suite-level `../../references/orchestration-policy.md`.
+
 When a plan will hand off to `ralph-execute`, choose one worker mode:
 
-- `tmux-visible`: preferred for non-trivial work when useful splits exist; execution should launch CLI workers in tmux/Ghostty unless `ralph-execute` finds a concrete safety or coupling reason not to.
-- `main-only`: use only for tiny one-shot work, unsafe overlapping write scopes, immediate blocker dependencies, unavailable worker tooling, or explicit user instruction not to use workers.
+- `tmux-visible`: preferred for non-trivial work when useful splits pass the orchestration decision gate; execution should launch CLI workers in tmux/Ghostty unless `ralph-execute` finds a concrete safety, coupling, or overhead reason not to.
+- `main-only`: use for tiny one-shot work, tightly coupled changes, unsafe overlapping write scopes, immediate blocker dependencies, product-judgment-heavy work, unavailable worker tooling, or explicit user instruction not to use workers.
 
-Run a worker-first decomposition before selecting `main-only`. Look for splits across implementation, tests, docs, data/migration boundaries, reproduction hypotheses, visual viewports, regression checks, or review. If a plan selects `main-only` for non-trivial work, include `No-Worker Justification` with the concrete reason.
+Run a worker-first decomposition before selecting `main-only`. Look for splits across implementation, tests, docs, data/migration boundaries, reproduction hypotheses, visual viewports, regression checks, or review. Choose workers only when coordination cost is lower than the expected value. If a plan selects `main-only` for non-trivial work, include `No-Worker Justification` with the concrete split considered and rejected.
 
 Choose `tmux-visible` when worker ownership can be separated into disjoint write scopes or disjoint diagnostic/verification responsibilities. The plan must name each worker's `worker_id`, responsibility, write scope or diagnostic scope, required prompt input, validation expectation, and dependency.
+
+For tmux-visible plans, include the visibility expectation: one Ghostty window attached to the tmux session, a `workers` window with one tiled pane per subagent, and an optional `monitor` window for aggregate status.

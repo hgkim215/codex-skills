@@ -9,6 +9,15 @@ Use this contract when a failure, failed verification, or regression check drive
 - Inspect `git status --short` before editing.
 - Preserve user changes and generated work that you did not create.
 
+## Graph Context
+
+Follow the suite-level `../../references/graph-context-policy.md`.
+
+- Use CodeGraph after reproduction when caller/callee relationships, shared helpers, or impact radius can narrow diagnosis.
+- Skip CodeGraph when the failing command already identifies a local line, fixture, config value, or simple assertion.
+- Use ActiveGraph only for long-running or worker-heavy QA state when available.
+- Use Obsidian only for narrow historical expected-behavior context.
+
 ## Failure Artifact Consumption
 
 - Prefer an exact failing command, test name, stack trace, log excerpt, or CI output.
@@ -48,9 +57,11 @@ If goal tracking is requested but the macro objective, scope, done criteria, sco
 
 ## Subagent Policy
 
+Follow the suite-level `../../references/orchestration-policy.md`.
+
 - Use worker-first assessment for non-trivial failures. Before diagnosing alone, look for independent hypotheses, disjoint write scopes, parallel reproduction paths, or parallel regression coverage.
-- Prefer subagents for independent hypotheses, disjoint write scopes, diagnostic-only investigations, or parallel regression coverage.
-- Use main-only only when the failure is tiny, tightly coupled, unsafe to split, blocked on one immediate reproduction path, tooling is unavailable, or the user explicitly asks not to use workers.
+- Prefer subagents for independent hypotheses, disjoint write scopes, diagnostic-only investigations, or parallel regression coverage when the expected value beats coordination cost.
+- Use main-only when the failure is tiny, tightly coupled, unsafe to split, already localized, blocked on one immediate reproduction path, tooling is unavailable, or the user explicitly asks not to use workers.
 - When selecting main-only for non-trivial QA, report `No-Worker Justification`.
 - Give each worker explicit ownership of files, modules, diagnostics, or tests.
 - Tell workers they are not alone in the codebase and must not revert user or other-agent changes.

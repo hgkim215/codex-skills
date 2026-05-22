@@ -85,19 +85,22 @@ If the run directory contains `goal.md`, read it as worker orientation context, 
 Use the bundled helper when tmux or status files need inspection:
 
 ```bash
-"${CODEX_HOME:-$HOME/.codex}/skills/tmux-worker-watch/scripts/tmux_worker_watch.sh" --all --pane-lines 40
+RALPH_SKILLS_HOME="${RALPH_SKILLS_HOME:-$HOME/.agents/skills}"
+"$RALPH_SKILLS_HOME/tmux-worker-watch/scripts/tmux_worker_watch.sh" --all --pane-lines 40
 ```
 
 For a specific session:
 
 ```bash
-"${CODEX_HOME:-$HOME/.codex}/skills/tmux-worker-watch/scripts/tmux_worker_watch.sh" --session SESSION_NAME --pane-lines 60
+RALPH_SKILLS_HOME="${RALPH_SKILLS_HOME:-$HOME/.agents/skills}"
+"$RALPH_SKILLS_HOME/tmux-worker-watch/scripts/tmux_worker_watch.sh" --session SESSION_NAME --pane-lines 60
 ```
 
 For a structured run directory:
 
 ```bash
-"${CODEX_HOME:-$HOME/.codex}/skills/tmux-worker-watch/scripts/tmux_worker_watch.sh" --status-dir /path/to/run-dir
+RALPH_SKILLS_HOME="${RALPH_SKILLS_HOME:-$HOME/.agents/skills}"
+"$RALPH_SKILLS_HOME/tmux-worker-watch/scripts/tmux_worker_watch.sh" --status-dir /path/to/run-dir
 ```
 
 Do not run mutating tmux commands. The helper is intentionally limited to listing sessions, windows, panes, and capturing pane text.

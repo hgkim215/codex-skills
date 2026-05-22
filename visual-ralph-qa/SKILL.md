@@ -14,6 +14,7 @@ Use this skill when the screen itself is the verification surface. Use `ralph-qa
 ## Visual QA Contract
 
 Read `references/visual-qa-contract.md` when using this skill.
+Read `../references/graph-context-policy.md` and `../references/orchestration-policy.md` when graph context or worker splitting might affect visual QA.
 
 Apply that contract as operating rules:
 
@@ -24,6 +25,7 @@ Apply that contract as operating rules:
 - Check text overlap, overflow, blank screens, missing images, broken interactions, and console errors.
 - Recheck the same target and viewport after any fix.
 - Do not depend on OMX, HUD, `.omx/state`, or tmux hooks.
+- Use CodeGraph only for route/component discovery or structural UI impact; skip it for small localized style adjustments.
 
 ## Goal Awareness
 
@@ -111,6 +113,12 @@ Before editing, inspect:
 - app routing, page, component, style, asset, and test files named by the target
 
 Use `rg` or `rg --files` first. Read only what is needed to run and inspect the UI safely.
+
+Apply Graph Context Preflight from `../references/graph-context-policy.md` only when useful:
+
+- CodeGraph: route/component ownership, shared UI primitives, design-system usage, or broad visual impact.
+- ActiveGraph: long-running or worker-heavy visual QA state when available.
+- Obsidian: prior design decisions or user visual preferences, only through narrow lookup.
 
 ### 3. Choose Browser Surface
 
